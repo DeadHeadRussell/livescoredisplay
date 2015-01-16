@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.prefs.Preferences;
 
 import javax.swing.DefaultListModel;
 
@@ -36,13 +37,13 @@ public class Model implements DisplayMenuListener {
 	private File _init_file;
 
 	@Expose
-	private int _windowX = 100;
+	private int _windowX = 0;
 	@Expose
-	private int _windowY = 100;
+	private int _windowY = 0;
 	@Expose
-	private int _windowWidth = 100;
+	private int _windowWidth = 0;
 	@Expose
-	private int _windowHeight = 100;
+	private int _windowHeight = 0;
 
 	private List<Score> _scores = new ArrayList<Score>();
 	private int _currentScore = -1;
@@ -76,13 +77,18 @@ public class Model implements DisplayMenuListener {
 
 		_hcmp.start(IP_ADDRESS, PORT_PULL, PORT_PUBLISH);
 
-		// XXX: Hack, set %USER%/hcmp or something as the default library.
-		File path = new File("C:\\Users\\deadh_000\\library");
+		Preferences prefs = Preferences.userRoot();
+		File path = new File(prefs.node("edu.cmu.mat.lsd").get("library", ""));
 		try {
 			onSetPath(path);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public boolean hasSize() {
+		return _windowX != 0 && _windowY != 0 && _windowWidth != 0
+				&& _windowHeight != 0;
 	}
 
 	public int getWindowX() {
@@ -110,7 +116,11 @@ public class Model implements DisplayMenuListener {
 	}
 
 	public Score getCurrentScore() {
-		return _scores.get(_currentScore);
+		try {
+			return _scores.get(_currentScore);
+		} catch (IndexOutOfBoundsException e) {
+			return null;
+		}
 	}
 
 	public int getCurrentView() {
@@ -172,6 +182,9 @@ public class Model implements DisplayMenuListener {
 
 	public void onSetPath(File path) throws IOException {
 		save();
+
+		Preferences prefs = Preferences.userRoot();
+		prefs.node("edu.cmu.mat.lsd").put("library", path.getAbsolutePath());
 
 		_library = path;
 		_init_file = new File(_library.getAbsolutePath() + File.separator
@@ -251,6 +264,10 @@ public class Model implements DisplayMenuListener {
 		});
 
 		_scores.clear();
+		if (scores == null) {
+			return;
+		}
+
 		for (File score : scores) {
 			try {
 				Score newScore = Score.fromDirectory(score);

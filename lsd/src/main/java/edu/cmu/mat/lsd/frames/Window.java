@@ -59,8 +59,12 @@ public class Window implements ControllerListener {
 	}
 
 	public void onUpdateLibraryPath() {
-		_frame.setBounds(_model.getWindowX(), _model.getWindowY(),
-				_model.getWindowWidth(), _model.getWindowHeight());
+		if (_model.hasSize()) {
+			_frame.setBounds(_model.getWindowX(), _model.getWindowY(),
+					_model.getWindowWidth(), _model.getWindowHeight());
+		} else {
+			_frame.setBounds(100, 100, 800, 600);
+		}
 		_frame.repaint();
 		_frame.revalidate();
 	}

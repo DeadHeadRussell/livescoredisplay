@@ -32,6 +32,10 @@ public class NotationPanel implements Panel {
 		_panel.removeAll();
 
 		Score score = _model.getCurrentScore();
+		if (score == null) {
+			return;
+		}
+
 		for (Page page : score.getPages()) {
 			_panel.add(new JPage(_model, page));
 		}
@@ -46,6 +50,7 @@ public class NotationPanel implements Panel {
 	}
 
 	public void onUpdateLibraryPath() {
+		onUpdateScore();
 	}
 
 	public void onProgramQuit() {

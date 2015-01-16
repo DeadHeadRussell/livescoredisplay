@@ -17,11 +17,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextArea;
 import javax.swing.JToolBar;
-import javax.swing.border.BevelBorder;
-import javax.swing.plaf.basic.BasicBorders.MarginBorder;
 
 import edu.cmu.mat.lsd.ControllerListener;
 import edu.cmu.mat.lsd.Model;
+import edu.cmu.mat.scores.Score;
 import edu.cmu.mat.scores.Section;
 
 public class NotationToolbar implements Toolbar, ControllerListener {
@@ -129,7 +128,10 @@ public class NotationToolbar implements Toolbar, ControllerListener {
 		_arrangement.addKeyListener(new KeyListener() {
 			@Override
 			public void keyTyped(KeyEvent e) {
-				_model.getCurrentScore().saveArrangment(_arrangement.getText());
+				Score score = _model.getCurrentScore();
+				if (score != null) {
+					score.saveArrangment(_arrangement.getText());
+				}
 			}
 
 			@Override
@@ -156,7 +158,12 @@ public class NotationToolbar implements Toolbar, ControllerListener {
 
 	@Override
 	public void onUpdateModel() {
-		List<Section> sections = _model.getCurrentScore().getSections();
+		Score score = _model.getCurrentScore();
+		if (score == null) {
+			return;
+		}
+
+		List<Section> sections = score.getSections();
 		String sections_text = "";
 		for (Section section : sections) {
 			sections_text += section.getName() + "\n";
