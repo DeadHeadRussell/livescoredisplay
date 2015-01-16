@@ -226,8 +226,8 @@ public class HcmpClient implements HcmpMessenger {
 		List<Barline> start_barlines = score.getStartBarlines();
 		List<Barline> end_barlines = score.getEndBarlines();
 		for (Section section : arrangement) {
-			int start_index = start_barlines.indexOf(section.getStart());
-			int end_index = end_barlines.indexOf(section.getEnd());
+			int start_index = start_barlines.indexOf(section.getStart()) * 4;
+			int end_index = end_barlines.indexOf(section.getEnd()) * 4;
 			message_parts.add("(" + section.getName() + "," + start_index + ","
 					+ end_index + ")");
 		}

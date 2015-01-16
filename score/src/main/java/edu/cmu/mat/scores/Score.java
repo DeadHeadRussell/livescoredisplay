@@ -160,12 +160,27 @@ public class Score implements ScoreObject {
 
 		List<Image> images = new ArrayList<Image>();
 		if (imageFiles != null) {
-			images = Arrays.asList(new Image[imageFiles.length]);
+			int number = 0;
 			for (File image : imageFiles) {
 				String name = image.getName();
-				int index = Integer.parseInt(name.substring(0,
-						name.indexOf('.'))) - 1;
-				images.set(index, new Image(ImageIO.read(image)));
+				try {
+					int a = Integer.parseInt(name.substring(0,
+							name.indexOf('.'))) - 1;
+					number++;
+				} catch (Exception e) {
+				}
+			}
+
+			images = Arrays.asList(new Image[number]);
+			for (File image : imageFiles) {
+				String name = image.getName();
+				try {
+					int index = Integer.parseInt(name.substring(0,
+							name.indexOf('.'))) - 1;
+					images.set(index, new Image(ImageIO.read(image)));
+				} catch (Exception e) {
+					java.lang.System.err.println(e);
+				}
 			}
 		}
 
