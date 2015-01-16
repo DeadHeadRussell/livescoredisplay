@@ -223,13 +223,16 @@ public class HcmpClient implements HcmpMessenger {
 	public void sendArrangement(Score score) {
 		List<Section> arrangement = score.getArrangementList();
 		List<String> message_parts = new ArrayList<String>(arrangement.size());
+
 		List<Barline> start_barlines = score.getStartBarlines();
 		List<Barline> end_barlines = score.getEndBarlines();
+
 		for (Section section : arrangement) {
-			int start_index = start_barlines.indexOf(section.getStart()) * 4;
-			int end_index = end_barlines.indexOf(section.getEnd()) * 4;
-			message_parts.add("(" + section.getName() + "," + start_index + ","
-					+ end_index + ")");
+			int start_beat = start_barlines.indexOf(section.getStart()) * 4;
+			int end_beat = end_barlines.indexOf(section.getEnd()) * 4;
+			int duration = end_beat - start_beat;
+			message_parts.add("(" + section.getName() + "," + start_beat + ","
+					+ duration + ")");
 		}
 		sendMessage("hcmp arrangement " + Joiner.on(',').join(message_parts));
 	}

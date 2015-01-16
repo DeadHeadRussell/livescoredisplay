@@ -16,8 +16,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
 import edu.cmu.mat.lsd.hcmp.HcmpClient;
-import edu.cmu.mat.lsd.hcmp.HcmpListener;
-import edu.cmu.mat.lsd.hcmp.TimeMap;
 import edu.cmu.mat.lsd.menus.listeners.DisplayMenuListener;
 import edu.cmu.mat.lsd.tools.DeleteTool;
 import edu.cmu.mat.lsd.tools.MoveTool;
@@ -58,7 +56,7 @@ public class Model implements DisplayMenuListener {
 	private Tool _currentTool = null;
 
 	private HcmpClient _hcmp = new HcmpClient();
-	private static final String IP_ADDRESS = "192.168.1.127";
+	private static final String IP_ADDRESS = "localhost";
 	private static final String PORT_PULL = "5544";
 	private static final String PORT_PUBLISH = "5566";
 
@@ -69,9 +67,7 @@ public class Model implements DisplayMenuListener {
 	public final Tool DELETE_TOOL = new DeleteTool();
 
 	public final static int VIEW_NOTATION = 0;
-	public final static int VIEW_SECTIONS = 1;
-	public final static int VIEW_ARRANGMENT = 2;
-	public final static int VIEW_DISPLAY = 3;
+	public final static int VIEW_DISPLAY = 1;
 
 	public Model(Controller controller) {
 		_controller = controller;
@@ -165,7 +161,7 @@ public class Model implements DisplayMenuListener {
 		_controller.toolUpdated();
 	}
 
-	public void onNewScore() {
+	public void onNewScore(String score_name) {
 		// TODO Auto-generated method stub
 
 	}

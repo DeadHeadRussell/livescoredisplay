@@ -31,6 +31,12 @@ public class NewSectionTool extends Tool {
 			}
 			end_barline.setInactive();
 			_start_barline.setInactive();
+
+			java.lang.System.out.println(page.getParent().getStartBarlines()
+					.indexOf(_start_barline));
+			java.lang.System.out.println(page.getParent().getEndBarlines()
+					.indexOf(end_barline));
+
 			_start_barline = null;
 
 			if (_barline != null) {

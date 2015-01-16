@@ -250,9 +250,13 @@ public class Score implements ScoreObject {
 
 	public List<Barline> getStartBarlines() {
 		List<Barline> barlines = new LinkedList<Barline>();
-		for (Page page : getPages()) {
-			for (System system : page.getSystems()) {
-				List<Barline> system_barlines = system.getBarlines();
+
+		List<Page> pages = getPages();
+		for (int page = 0; page < pages.size(); page++) {
+			List<System> systems = pages.get(page).getSystems();
+			for (int system = 0; system < systems.size(); system++) {
+				List<Barline> system_barlines = systems.get(system)
+						.getBarlines();
 				for (int i = 0; i < system_barlines.size() - 1; i++) {
 					barlines.add(system_barlines.get(i));
 				}
@@ -263,9 +267,14 @@ public class Score implements ScoreObject {
 
 	public List<Barline> getEndBarlines() {
 		List<Barline> barlines = new LinkedList<Barline>();
-		for (Page page : getPages()) {
-			for (System system : page.getSystems()) {
-				List<Barline> system_barlines = system.getBarlines();
+		barlines.add(null);
+
+		List<Page> pages = getPages();
+		for (int page = 0; page < pages.size(); page++) {
+			List<System> systems = pages.get(page).getSystems();
+			for (int system = 0; system < systems.size(); system++) {
+				List<Barline> system_barlines = systems.get(system)
+						.getBarlines();
 				for (int i = 1; i < system_barlines.size(); i++) {
 					barlines.add(system_barlines.get(i));
 				}

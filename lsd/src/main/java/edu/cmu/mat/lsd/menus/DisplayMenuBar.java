@@ -11,6 +11,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 
@@ -24,8 +25,6 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 	private Model _model;
 	private JMenu _open;
 	private JRadioButtonMenuItem _notation;
-	private JRadioButtonMenuItem _section;
-	private JRadioButtonMenuItem _arrangement;
 	private JRadioButtonMenuItem _display;
 
 	public DisplayMenuBar(Model model) {
@@ -55,7 +54,8 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 
 		new_score.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
-				_model.onNewScore();
+				String name = JOptionPane.showInputDialog("Score Name");
+				_model.onNewScore(name);
 			}
 		});
 
@@ -82,15 +82,9 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 
 	private JMenu createLibraryMenu() {
 		JMenu library = new JMenu("Library");
-		JMenu new_ = new JMenu("New");
-		JMenuItem newScore = new JMenuItem("Score...");
-		JMenuItem newArrangement = new JMenuItem("Arrangment...");
 		_open = new JMenu("Open");
 		JMenuItem setPath = new JMenuItem("Set Path...");
 
-		new_.add(newScore);
-		new_.add(newArrangement);
-		library.add(new_);
 		library.add(_open);
 		library.add(new JSeparator());
 		library.add(setPath);
@@ -119,29 +113,13 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 
 		ButtonGroup group = new ButtonGroup();
 		_notation = new JRadioButtonMenuItem("Notation");
-		_section = new JRadioButtonMenuItem("Section");
-		_arrangement = new JRadioButtonMenuItem("Arragnment");
 		_display = new JRadioButtonMenuItem("Display");
 		group.add(_notation);
-		group.add(_section);
-		group.add(_arrangement);
 		group.add(_display);
 
 		_notation.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				_model.setCurrentView(Model.VIEW_NOTATION);
-			}
-		});
-
-		_section.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_model.setCurrentView(Model.VIEW_SECTIONS);
-			}
-		});
-
-		_arrangement.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_model.setCurrentView(Model.VIEW_ARRANGMENT);
 			}
 		});
 
@@ -152,8 +130,6 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 		});
 
 		view.add(_notation);
-		view.add(_section);
-		view.add(_arrangement);
 		view.add(_display);
 
 		return view;
@@ -191,10 +167,6 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 		int view = _model.getCurrentView();
 		if (view == Model.VIEW_NOTATION) {
 			_notation.setSelected(true);
-		} else if (view == Model.VIEW_SECTIONS) {
-			_section.setSelected(true);
-		} else if (view == Model.VIEW_ARRANGMENT) {
-			_arrangement.setSelected(true);
 		} else if (view == Model.VIEW_DISPLAY) {
 			_display.setSelected(true);
 		}
