@@ -216,7 +216,7 @@ public class HcmpClient implements HcmpMessenger {
 
 	@Override
 	public void getArrangement() {
-		sendMessage("hcmp arrangement get");
+		sendMessage("hcmp get_arrangement");
 	}
 
 	@Override
@@ -231,8 +231,7 @@ public class HcmpClient implements HcmpMessenger {
 			message_parts.add("(" + section.getName() + "," + start_index + ","
 					+ end_index + ")");
 		}
-		sendMessage("hcmp arrangement save "
-				+ Joiner.on(',').join(message_parts));
+		sendMessage("hcmp arrangement " + Joiner.on(',').join(message_parts));
 	}
 
 	private void sendMessage(String message) {
