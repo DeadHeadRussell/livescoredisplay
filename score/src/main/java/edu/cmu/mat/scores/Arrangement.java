@@ -3,13 +3,13 @@ package edu.cmu.mat.scores;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.DefaultListModel;
+import com.google.gson.annotations.Expose;
 
 public class Arrangement {
 	private Score _score;
 
 	private List<Section> _list = new ArrayList<Section>();
-	// @Expose
+	@Expose
 	private List<Integer> _order;
 
 	public Arrangement(Score score) {
@@ -49,20 +49,6 @@ public class Arrangement {
 		}
 	}
 
-	public void load(DefaultListModel<String> list_model) {
-		list_model.removeAllElements();
-		initList();
-
-		List<Section> list = _list;
-		if (_list.size() == 0) {
-			list = _score.getSections();
-		}
-
-		for (Section section : list) {
-			list_model.addElement(section.getName());
-		}
-	}
-
 	public double getNextBarlineBeat(double beat) {
 		// XXX: All time signatures are 4/4 for now.
 		return beat + 4 - (beat % 4);
@@ -81,12 +67,6 @@ public class Arrangement {
 		}
 		double section_beat = getSectionBeat(beat);
 		return getBarline(current_section, section_beat);
-	}
-
-	private double findNextBarlineBeat(Section section, double section_beat) {
-		int beat_tally = 0;
-		return 0;
-		// TODO when there are different time signatures.
 	}
 
 	private Barline getBarline(Section section, double beat) {

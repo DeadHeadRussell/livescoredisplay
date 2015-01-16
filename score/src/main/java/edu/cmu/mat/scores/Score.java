@@ -10,7 +10,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.imageio.ImageIO;
-import javax.swing.DefaultListModel;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -63,8 +62,13 @@ public class Score implements ScoreObject {
 		for (int i = 0; i < other.getNumberPages(); i++) {
 			addPage(new Page(this, other.getPage(i), images.get(i)));
 		}
+
+		for (Section section : other.getSections()) {
+			addSection(new Section(this, section));
+		}
+
 		// Initializing arrangements has to come after initializing the pages
-		// since arrangements relies on _sections.
+		// and sections since arrangements relies on them to already exist.
 		_arrangement = new Arrangement(this, other._arrangement);
 	}
 
@@ -164,8 +168,7 @@ public class Score implements ScoreObject {
 			for (File image : imageFiles) {
 				String name = image.getName();
 				try {
-					int a = Integer.parseInt(name.substring(0,
-							name.indexOf('.'))) - 1;
+					Integer.parseInt(name.substring(0, name.indexOf('.')));
 					number++;
 				} catch (Exception e) {
 				}

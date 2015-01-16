@@ -41,7 +41,6 @@ public class JsonParser implements Parser {
 
 			reader.close();
 			java.lang.System.out.println("Read: " + json_text);
-
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

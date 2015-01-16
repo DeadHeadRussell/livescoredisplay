@@ -14,6 +14,11 @@ import edu.cmu.mat.scores.events.SectionStartEvent;
 public class Section {
 	@Expose
 	private String _name = "  ";
+	@Expose
+	private int _start_index;
+	@Expose
+	private int _end_index;
+
 	private Barline _start;
 	private Barline _end;
 	private int _state = NOT_ACTIVE;
@@ -25,16 +30,25 @@ public class Section {
 		_start = start;
 		_end = end;
 
+		Score score = _start.getParent().getParent().getParent();
+		List<Barline> start_barlines = score.getStartBarlines();
+		List<Barline> end_barlines = score.getEndBarlines();
+		_start_index = start_barlines.indexOf(_start);
+		_end_index = end_barlines.indexOf(_end);
+
 		_start.addEvent(new SectionStartEvent(_start, this));
 		_end.addEvent(new SectionEndEvent(_end));
 	}
 
-	public void setStart(Barline start) {
-		_start = start;
-	}
+	public Section(Score score, Section other) {
+		_name = other._name;
+		_start_index = other._start_index;
+		_end_index = other._end_index;
 
-	public void setEnd(Barline end) {
-		_end = end;
+		List<Barline> start_barlines = score.getStartBarlines();
+		List<Barline> end_barlines = score.getEndBarlines();
+		_start = start_barlines.get(_start_index);
+		_end = end_barlines.get(_end_index);
 	}
 
 	public void setName(String name) {
