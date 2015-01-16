@@ -17,18 +17,14 @@ import edu.cmu.mat.lsd.menus.DisplayMenuBar;
 import edu.cmu.mat.lsd.panels.DisplayPanel;
 import edu.cmu.mat.lsd.panels.NotationPanel;
 import edu.cmu.mat.lsd.panels.Panel;
-import edu.cmu.mat.lsd.panels.SectionPanel;
-import edu.cmu.mat.lsd.toolbars.ArrangmentToolbar;
 import edu.cmu.mat.lsd.toolbars.DisplayToolbar;
 import edu.cmu.mat.lsd.toolbars.NotationToolbar;
-import edu.cmu.mat.lsd.toolbars.SectionToolbar;
 import edu.cmu.mat.lsd.toolbars.Toolbar;
 
 public class Window implements ControllerListener {
 	private Model _model;
 	private Controller _controller;
 	private Panel _notation = null;
-	private Panel _section = null;
 	private Panel _display = null;
 	private Toolbar _toolbar = null;
 	private JFrame _frame = new JFrame();
@@ -47,7 +43,6 @@ public class Window implements ControllerListener {
 		_frame.setJMenuBar(menu);
 
 		_notation = new NotationPanel(model);
-		_section = new SectionPanel(model);
 		_display = new DisplayPanel(model);
 		_controller.addListener(_notation);
 		_controller.addListener(_display);
@@ -91,23 +86,11 @@ public class Window implements ControllerListener {
 			if (view == Model.VIEW_NOTATION) {
 				_toolbar = new NotationToolbar(_model);
 				_controller.addListener((NotationToolbar) _toolbar);
-				_frame.remove(_section.getContainer());
-				_frame.remove(_display.getContainer());
-				_frame.add(_notation.getContainer());
-			} else if (view == Model.VIEW_SECTIONS) {
-				_toolbar = new SectionToolbar(_model);
-				_frame.remove(_notation.getContainer());
-				_frame.remove(_display.getContainer());
-				_frame.add(_section.getContainer());
-			} else if (view == Model.VIEW_ARRANGMENT) {
-				_toolbar = new ArrangmentToolbar(_model);
-				_frame.remove(_section.getContainer());
 				_frame.remove(_display.getContainer());
 				_frame.add(_notation.getContainer());
 			} else if (view == Model.VIEW_DISPLAY) {
 				_toolbar = new DisplayToolbar(_model);
 				_frame.remove(_notation.getContainer());
-				_frame.remove(_section.getContainer());
 				_frame.add(_display.getContainer());
 			}
 		}

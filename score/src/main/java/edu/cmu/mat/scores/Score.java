@@ -65,7 +65,7 @@ public class Score implements ScoreObject {
 		}
 		// Initializing arrangements has to come after initializing the pages
 		// since arrangements relies on _sections.
-		_arrangement = new Arrangement(this, other.getArrangement());
+		_arrangement = new Arrangement(this, other._arrangement);
 	}
 
 	public String getName() {
@@ -196,12 +196,16 @@ public class Score implements ScoreObject {
 		return _arrangement;
 	}
 
-	public void saveArrangment(DefaultListModel<String> list_model) {
-		_arrangement.save(list_model);
+	public List<Section> getArrangementList() {
+		List<Section> arrangement = _arrangement.getList();
+		if (arrangement.size() == 0) {
+			return getSections();
+		}
+		return arrangement;
 	}
 
-	public void loadArrangment(DefaultListModel<String> list_model) {
-		_arrangement.load(list_model);
+	public void saveArrangment(String string) {
+		_arrangement.save(string);
 	}
 
 	private int compareLocation(Page page1, Page page2) {

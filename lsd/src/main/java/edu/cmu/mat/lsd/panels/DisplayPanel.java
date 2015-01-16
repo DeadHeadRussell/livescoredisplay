@@ -72,7 +72,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 		_panel.removeAll();
 
 		Score score = _model.getCurrentScore();
-		List<Section> arrangement = score.getArrangement().getList();
+		List<Section> arrangement = score.getArrangementList();
 		if (arrangement == null) {
 			return;
 		}

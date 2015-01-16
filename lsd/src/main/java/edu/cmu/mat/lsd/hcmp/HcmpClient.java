@@ -221,7 +221,7 @@ public class HcmpClient implements HcmpMessenger {
 
 	@Override
 	public void sendArrangement(Score score) {
-		List<Section> arrangement = score.getArrangement().getList();
+		List<Section> arrangement = score.getArrangementList();
 		List<String> message_parts = new ArrayList<String>(arrangement.size());
 		List<Barline> start_barlines = score.getStartBarlines();
 		List<Barline> end_barlines = score.getEndBarlines();

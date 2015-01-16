@@ -157,13 +157,11 @@ public class Model implements DisplayMenuListener {
 
 	public void setCurrentView(int view) {
 		_currentView = view;
-
 		_controller.viewUpdated();
 	}
 
 	public void setCurrentTool(Tool tool) {
 		_currentTool = tool;
-
 		_controller.toolUpdated();
 	}
 
@@ -268,16 +266,6 @@ public class Model implements DisplayMenuListener {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	public void saveArrangment(DefaultListModel<String> list_model) {
-		Score score = getCurrentScore();
-		score.saveArrangment(list_model);
-	}
-
-	public void loadArrangment(DefaultListModel<String> list_model) {
-		Score score = getCurrentScore();
-		score.loadArrangment(list_model);
 	}
 
 	public void sendArrangement() {

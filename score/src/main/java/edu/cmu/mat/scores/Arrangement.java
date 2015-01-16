@@ -26,11 +26,12 @@ public class Arrangement {
 		return _list;
 	}
 
-	public void save(DefaultListModel<String> list_model) {
-		_list = new ArrayList<Section>(list_model.size());
-		_order = new ArrayList<Integer>(list_model.size());
-		for (int i = 0; i < list_model.size(); i++) {
-			String section_name = list_model.get(i);
+	public void save(String string) {
+		String[] section_names = string.split("\n");
+		_list = new ArrayList<Section>();
+		_order = new ArrayList<Integer>();
+
+		for (String section_name : section_names) {
 			Section section = null;
 			for (Section s : _score.getSections()) {
 				if (s.getName().equals(section_name)) {
