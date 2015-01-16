@@ -5,13 +5,11 @@ import java.util.List;
 
 import javax.swing.DefaultListModel;
 
-import com.google.gson.annotations.Expose;
-
 public class Arrangement {
 	private Score _score;
 
 	private List<Section> _list = new ArrayList<Section>();
-	@Expose
+	// @Expose
 	private List<Integer> _order;
 
 	public Arrangement(Score score) {

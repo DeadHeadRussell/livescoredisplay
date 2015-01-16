@@ -10,7 +10,7 @@ import edu.cmu.mat.scores.Page;
 
 public class NewSectionTool extends Tool {
 	private Model _model = null;
-	private Barline _barline;
+	private Barline _barline = null;
 	private Barline _start_barline = null;
 
 	public NewSectionTool(Model model) {
@@ -32,6 +32,11 @@ public class NewSectionTool extends Tool {
 			end_barline.setInactive();
 			_start_barline.setInactive();
 			_start_barline = null;
+
+			if (_barline != null) {
+				_barline.setInactive();
+				_barline = null;
+			}
 			return true;
 		}
 		return false;
