@@ -8,6 +8,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -17,6 +18,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextArea;
 import javax.swing.JToolBar;
+
+import com.google.common.base.Joiner;
 
 import edu.cmu.mat.lsd.ControllerListener;
 import edu.cmu.mat.lsd.Model;
@@ -163,20 +166,23 @@ public class NotationToolbar implements Toolbar, ControllerListener {
 			return;
 		}
 
+		Joiner joiner = Joiner.on("  ");
+
 		List<Section> sections = score.getSections();
-		String sections_text = "";
+		List<String> section_names = new ArrayList<String>(sections.size());
 		for (Section section : sections) {
-			sections_text += section.getName() + "\n";
+			section_names.add(section.getName());
 		}
-		_sections.setText(sections_text);
+		_sections.setText(joiner.join(section_names));
 
 		List<Section> arrangement = _model.getCurrentScore()
 				.getArrangementList();
-		String arrangement_text = "";
+		List<String> arrangement_names = new ArrayList<String>(
+				arrangement.size());
 		for (Section section : arrangement) {
-			arrangement_text += section.getName() + "\n";
+			arrangement_names.add(section.getName());
 		}
-		_arrangement.setText(arrangement_text);
+		_arrangement.setText(joiner.join(arrangement_names));
 	}
 
 	@Override

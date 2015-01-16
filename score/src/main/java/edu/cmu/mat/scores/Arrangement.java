@@ -27,7 +27,7 @@ public class Arrangement {
 	}
 
 	public void save(String string) {
-		String[] section_names = string.split("\n");
+		String[] section_names = string.split("\\s+");
 		_list = new ArrayList<Section>();
 		_order = new ArrayList<Integer>();
 
