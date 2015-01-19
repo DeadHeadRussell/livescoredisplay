@@ -12,6 +12,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.Timer;
 
@@ -239,6 +240,14 @@ public class DisplayPanel implements Panel, HcmpListener {
 				+ current_jsection.getY();
 
 		_cursor.setPosition(x, y);
+
+		JScrollBar scroll_bar = _scroller.getVerticalScrollBar();
+		if (y > (scroll_bar.getValue() + _scroller.getHeight()) - 100) {
+			int system_top = current_bar.getParent().getTop() - image_top
+					+ current_jsection.getY();
+			scroll_bar.setValue(Math.min(system_top, scroll_bar.getMaximum()));
+		}
+
 		redraw();
 	}
 
