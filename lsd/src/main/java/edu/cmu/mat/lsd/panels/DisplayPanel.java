@@ -5,9 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
@@ -33,7 +31,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 	private JPanel _panel = new JPanel();
 	private JLayeredPane _layers = new JLayeredPane();
 
-	Map<String, JSection> _jsection_map;
+	List<JSection> _jsections;
 
 	private TimeMap _time_map;
 	private Timer _play_timer;
@@ -140,11 +138,11 @@ public class DisplayPanel implements Panel, HcmpListener {
 		int width = 0;
 		int height = 0;
 
-		_jsection_map = new HashMap<String, JSection>();
+		_jsections = new ArrayList<JSection>();
 		for (PlaybackEvent event : _playback_events) {
 			if (event.isSectionStart()) {
 				JSection jsection = new JSection(event.getSection());
-				_jsection_map.put(event.getSection().getName(), jsection);
+				_jsections.add(jsection);
 				_panel.add(jsection);
 
 				width = Math.max(width, jsection.getWidth());
@@ -228,8 +226,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 		Section current_section = current_event.getSection();
 		Barline current_bar = current_event.getStart();
 
-		JSection current_jsection = _jsection_map
-				.get(current_section.getName());
+		JSection current_jsection = _jsections.get(current_event.getPos());
 		System top_system = current_section.getStart().getParent();
 		int image_top = top_system.getTop();
 
