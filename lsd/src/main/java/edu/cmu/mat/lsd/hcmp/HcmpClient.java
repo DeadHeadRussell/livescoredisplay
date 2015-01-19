@@ -133,7 +133,8 @@ public class HcmpClient implements HcmpMessenger {
 
 			private Boolean handleTmMessage(String[] tokens) {
 				if (listener != null) {
-					double real = new Date().getTime() - offset;
+					// double real = new Date().getTime() - offset;
+					double real = Double.parseDouble(tokens[2]);
 					double virtual = Double.parseDouble(tokens[3]);
 					double tempo = Double.parseDouble(tokens[4]) / 1000;
 					System.out.println("" + virtual + "," + tempo + "," + real);
