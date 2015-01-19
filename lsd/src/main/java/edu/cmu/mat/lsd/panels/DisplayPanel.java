@@ -1,6 +1,7 @@
 package edu.cmu.mat.lsd.panels;
 
 import java.awt.Dimension;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	private JScrollPane _scroller;
 	private JPanel _panel = new JPanel();
+	private JPanel _centering = new JPanel();
 	private JLayeredPane _layers = new JLayeredPane();
 
 	List<JSection> _jsections;
@@ -47,14 +49,16 @@ public class DisplayPanel implements Panel, HcmpListener {
 		_panel.setLayout(new BoxLayout(_panel, BoxLayout.Y_AXIS));
 		_layers.add(_panel, 2);
 		_panel.setLocation(0, 0);
-		_scroller = new JScrollPane(_layers);
-
-		_layers.setVisible(true);
 
 		_cursor = new JCursor(_panel);
 		_cursor.setOpaque(false);
 		_cursor.setSize(_layers.getPreferredSize());
 		_layers.add(_cursor, 2);
+
+		_scroller = new JScrollPane(_centering);
+		_centering.setLayout(new GridBagLayout());
+		_centering.add(_layers);
+		_layers.setVisible(true);
 
 		onUpdateView();
 	}
