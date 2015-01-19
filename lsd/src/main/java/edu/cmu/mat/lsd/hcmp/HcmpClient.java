@@ -133,13 +133,11 @@ public class HcmpClient implements HcmpMessenger {
 
 			private Boolean handleTmMessage(String[] tokens) {
 				if (listener != null) {
-					// double real = Double.parseDouble(tokens[2]);
+					double real = new Date().getTime() - offset;
 					double virtual = Double.parseDouble(tokens[3]);
-					// XXX: Tempo is bps, we want bpms
 					double tempo = Double.parseDouble(tokens[4]) / 1000;
-					double time = new Date().getTime() - offset;
-					System.out.println("" + virtual + "," + tempo + "," + time);
-					return listener.handleNewTime(TimeMap.Create(time, virtual,
+					System.out.println("" + virtual + "," + tempo + "," + real);
+					return listener.handleNewTime(TimeMap.Create(real, virtual,
 							tempo));
 				}
 				return false;

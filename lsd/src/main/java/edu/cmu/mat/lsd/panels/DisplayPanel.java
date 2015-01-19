@@ -3,6 +3,7 @@ package edu.cmu.mat.lsd.panels;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -32,23 +33,21 @@ public class DisplayPanel implements Panel, HcmpListener {
 	private JPanel _panel = new JPanel();
 	private JLayeredPane _layers = new JLayeredPane();
 
-	private int _current_beat = 0;
 	Map<String, JSection> _jsection_map;
 
 	private TimeMap _time_map;
 	private Timer _play_timer;
 	private JCursor _cursor;
 	private int _playback_id = 0;
-	private List<PlaybackEvent> _playback_events;
-	private int _events_index = -1;
+	private List<PlaybackEvent> _playback_events = new ArrayList<PlaybackEvent>();
+	private int _events_index = 0;
 
 	public DisplayPanel(Model model) {
 		_model = model;
+		_model.getHcmp().setListener(this);
 
 		_panel.setLayout(new BoxLayout(_panel, BoxLayout.Y_AXIS));
 		_layers.add(_panel, 2);
-		_layers.setPreferredSize(new Dimension(800, 800));
-		_panel.setSize(_layers.getPreferredSize());
 		_panel.setLocation(0, 0);
 		_scroller = new JScrollPane(_layers);
 
@@ -59,7 +58,6 @@ public class DisplayPanel implements Panel, HcmpListener {
 		_cursor.setSize(_layers.getPreferredSize());
 		_layers.add(_cursor, 2);
 
-		onUpdateScore();
 		onUpdateView();
 	}
 
@@ -78,10 +76,10 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	public void onUpdateView() {
 		if (_model.getCurrentView() == Model.VIEW_DISPLAY) {
-			_model.getHcmp().setListener(this);
-			onUpdateScore();
+			_scroller.revalidate();
+			_scroller.repaint();
 		} else {
-			_model.getHcmp().unsetListener(this);
+			handleStop();
 		}
 	}
 
@@ -100,7 +98,9 @@ public class DisplayPanel implements Panel, HcmpListener {
 	@Override
 	public Boolean handleNewTime(TimeMap time_map) {
 		_time_map = time_map;
-		restart();
+		if (_play_timer != null) {
+			restart();
+		}
 		return true;
 	}
 
@@ -125,31 +125,39 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	@Override
 	public Boolean handleNewArrangement(String[] arrangement_string) {
-		_playback_events = _model.getCurrentScore().createPlaybackEvents(
-				arrangement_string);
+		List<PlaybackEvent> new_events = _model.getCurrentScore()
+				.createPlaybackEvents(arrangement_string);
 
-		if (_playback_events == null) {
-			java.lang.System.err
-					.println("Invalid section name found in arrangement!");
+		if (new_events == null) {
+			java.lang.System.err.println("Could not parse new arrangement!");
 			return false;
 		}
 
+		_playback_events = new_events;
+
 		_panel.removeAll();
 
-		_jsection_map = new HashMap<String, JSection>();
+		int width = 0;
+		int height = 0;
 
+		_jsection_map = new HashMap<String, JSection>();
 		for (PlaybackEvent event : _playback_events) {
 			if (event.isSectionStart()) {
 				JSection jsection = new JSection(event.getSection());
 				_jsection_map.put(event.getSection().getName(), jsection);
 				_panel.add(jsection);
+
+				width = Math.max(width, jsection.getWidth());
+				height += jsection.getHeight();
 			}
 		}
 
+		_layers.setPreferredSize(new Dimension(width, height));
+		_panel.setSize(_layers.getPreferredSize());
+
+		_cursor.setSize(_layers.getPreferredSize());
 		_cursor.setLocation(0, 0);
 		_layers.moveToFront(_cursor);
-
-		_current_beat = 0;
 
 		redraw();
 
@@ -164,20 +172,25 @@ public class DisplayPanel implements Panel, HcmpListener {
 			return;
 		}
 
-		double next_event_time = getNextTime();
-		if (next_event_time < 0) {
-			return;
+		long delay = 0;
+		long time = new Date().getTime();
+		for (;; _events_index++) {
+			delay = (long) (_time_map.from(_events_index * 4) - time);
+			if (delay > 0) {
+				break;
+			}
 		}
-		_events_index++;
 
-		double next_real_time = _time_map.from(next_event_time);
-		int next_time = (int) (next_real_time - new Date().getTime());
-
-		_play_timer = new Timer(next_time, new ActionListener() {
+		delay = Math.max(delay, 0);
+		_play_timer = new Timer((int) delay, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				onEvent(_time_map.at((double) new Date().getTime()));
-				fireNextEvent(id);
+				moveCursor();
+				if (_events_index <= _playback_events.size()) {
+					fireNextEvent(id);
+				} else {
+					handleStop();
+				}
 			}
 		});
 
@@ -186,15 +199,24 @@ public class DisplayPanel implements Panel, HcmpListener {
 	}
 
 	private void resetTime() {
-		_cursor.resetTime();
-		redraw();
+		setTime(0);
 	}
 
 	private void setTime(int beat) {
-		_current_beat = beat;
+		int so_far = 0;
+		for (PlaybackEvent event : _playback_events) {
+			so_far += event.getDuration();
+			if (so_far > beat) {
+				_events_index = _playback_events.indexOf(event);
+				break;
+			}
+		}
+		moveCursor();
+	}
 
-		if (_current_beat < 0) {
-			_cursor.resetTime();
+	private void moveCursor() {
+		if (_events_index < 0 || _events_index >= _playback_events.size()) {
+			resetTime();
 			return;
 		}
 
@@ -215,17 +237,6 @@ public class DisplayPanel implements Panel, HcmpListener {
 		redraw();
 	}
 
-	private double getNextTime() {
-		if (_events_index == -1) {
-			return 0;
-		}
-		return _playback_events.get(_events_index).getDuration();
-	}
-
-	private void onEvent(double event_time) {
-		setTime((int) event_time);
-	}
-
 	private void start() {
 		_playback_id++;
 		fireNextEvent(_playback_id);
@@ -235,6 +246,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 		_playback_id++;
 		if (_play_timer != null) {
 			_play_timer.stop();
+			_play_timer = null;
 		}
 	}
 

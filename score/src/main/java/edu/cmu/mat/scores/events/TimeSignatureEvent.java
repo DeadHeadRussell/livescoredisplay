@@ -48,4 +48,8 @@ public class TimeSignatureEvent extends Event {
 
 	}
 
+	public void delete() {
+
+	}
+
 }

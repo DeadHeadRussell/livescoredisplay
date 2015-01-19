@@ -15,12 +15,7 @@ public class JCursor extends JPanel {
 	private int _y;
 
 	public JCursor(JComponent parent) {
-		resetTime();
 		_parent = parent;
-	}
-
-	public void resetTime() {
-		_x = _y = -1;
 	}
 
 	public void setPosition(int x, int y) {
@@ -35,9 +30,6 @@ public class JCursor extends JPanel {
 
 	@Override
 	public void paint(Graphics graphics) {
-		if (_x == -1 || _y == -1) {
-			return;
-		}
 		graphics.setColor(Color.RED);
 		graphics.fillOval(_x, _y, 5, 5);
 		graphics.setColor(Color.BLACK);

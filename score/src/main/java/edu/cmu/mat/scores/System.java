@@ -77,8 +77,16 @@ public class System implements ScoreObject {
 		setState(NONE_ACTIVE);
 	}
 
+	public void delete() {
+		for (Barline barline : _barlines) {
+			barline.delete();
+		}
+	}
+
 	public void deleteChild(ScoreObject child) {
-		_barlines.remove(child);
+		if (_barlines.remove(child)) {
+			child.delete();
+		}
 	}
 
 	public void normalize() {

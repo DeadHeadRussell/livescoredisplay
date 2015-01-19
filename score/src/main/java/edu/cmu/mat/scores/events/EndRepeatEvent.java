@@ -46,4 +46,9 @@ public class EndRepeatEvent extends Event {
 
 	}
 
+	public void delete() {
+		// TODO Auto-generated method stub
+
+	}
+
 }

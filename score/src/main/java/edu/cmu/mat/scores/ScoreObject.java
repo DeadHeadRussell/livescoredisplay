@@ -5,6 +5,8 @@ import java.awt.Point;
 public interface ScoreObject {
 	public void move(Point distance, ScoreObject intersect);
 
+	public void delete();
+
 	public void deleteChild(ScoreObject child);
 
 	public void setActive(Point location);

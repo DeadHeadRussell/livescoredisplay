@@ -39,8 +39,16 @@ public class Page implements ScoreObject {
 		_systems.add(system);
 	}
 
+	public void delete() {
+		for (System system : _systems) {
+			system.delete();
+		}
+	}
+
 	public void deleteChild(ScoreObject child) {
-		_systems.remove(child);
+		if (_systems.remove(child)) {
+			child.delete();
+		}
 	}
 
 	public void normalize() {

@@ -214,7 +214,6 @@ public class Model implements DisplayMenuListener {
 		}
 
 		String init_text = _gson.toJson(this);
-		System.out.println("Write: " + init_text);
 		try {
 			FileWriter writer = new FileWriter(_init_file);
 			writer.write(init_text);
@@ -234,8 +233,6 @@ public class Model implements DisplayMenuListener {
 				json_text += (char) c;
 			}
 			reader.close();
-
-			System.out.println("Read: " + json_text);
 
 			Model model = _gson.fromJson(json_text, this.getClass());
 			_windowX = model._windowX;

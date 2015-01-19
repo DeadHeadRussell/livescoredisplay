@@ -39,4 +39,8 @@ public class StartRepeatEvent extends Event {
 		// TODO Auto-generated method stub
 
 	}
+
+	public void delete() {
+
+	}
 }

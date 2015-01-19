@@ -73,7 +73,7 @@ public class Score implements ScoreObject {
 			Barline start = new_section.getStart();
 			Barline end = new_section.getEnd();
 			start.addEvent(new SectionStartEvent(start, new_section));
-			end.addEvent(new SectionEndEvent(end));
+			end.addEvent(new SectionEndEvent(end, new_section));
 		}
 
 		// Initializing arrangements has to come after initializing the pages
@@ -100,7 +100,7 @@ public class Score implements ScoreObject {
 
 		Section new_section = new Section(start, end);
 		start.addEvent(new SectionStartEvent(start, new_section));
-		end.addEvent(new SectionEndEvent(end));
+		end.addEvent(new SectionEndEvent(end, new_section));
 
 		for (int i = 0; i < _sections.size(); i++) {
 			Section section = _sections.get(i);
@@ -135,6 +135,25 @@ public class Score implements ScoreObject {
 			return;
 		}
 		_sections.remove(section);
+		List<Event> events = new ArrayList<Event>();
+		events.addAll(section.getStart().getEvents());
+		events.addAll(section.getEnd().getEvents());
+
+		for (int i = 0; i < events.size(); i++) {
+			Event event = events.get(i);
+			Section s = null;
+			if (event.getType() == Event.Type.SECTION_START) {
+				s = ((SectionStartEvent) event).getSection();
+			} else if (event.getType() == Event.Type.SECTION_END) {
+				s = ((SectionEndEvent) event).getSection();
+			}
+
+			if (s != null && s == section) {
+				section.getStart().deleteChild(event);
+				section.getEnd().deleteChild(event);
+				break;
+			}
+		}
 	}
 
 	public void addPage(Page page) {
@@ -157,7 +176,6 @@ public class Score implements ScoreObject {
 		// XXX: Save images if any new were added.
 		String json = GSON.toJson(this);
 		File init_file = new File(score_directory, "init.json");
-		java.lang.System.out.println("Write: " + json);
 		try {
 			FileWriter writer = new FileWriter(init_file);
 			writer.write(json);
@@ -258,6 +276,10 @@ public class Score implements ScoreObject {
 		// Does nothing.
 	}
 
+	public void delete() {
+		// Does nothing.
+	}
+
 	public void deleteChild(ScoreObject child) {
 		// Does nothing.
 	}
@@ -298,46 +320,43 @@ public class Score implements ScoreObject {
 	}
 
 	public List<PlaybackEvent> createPlaybackEvents(String[] arrangement_string) {
-		List<PlaybackEvent> events = new LinkedList<PlaybackEvent>();
+		try {
+			List<PlaybackEvent> events = new LinkedList<PlaybackEvent>();
 
-		Map<String, List<PlaybackEvent>> section_map = new HashMap<String, List<PlaybackEvent>>();
-		List<Barline> start_barlines = getStartBarlines();
-		List<Barline> end_barlines = getEndBarlines();
+			Map<String, List<PlaybackEvent>> section_map = new HashMap<String, List<PlaybackEvent>>();
+			List<Barline> start_barlines = getStartBarlines();
+			List<Barline> end_barlines = getEndBarlines();
 
-		for (String section_string : arrangement_string) {
-			String[] parts = section_string.split(",");
-			String name = parts[0];
+			for (String section_string : arrangement_string) {
+				String[] parts = section_string.split(",");
+				String name = parts[0];
 
-			int start = Integer.parseInt(parts[1]) / 4;
-			int end = (Integer.parseInt(parts[2]) - start) / 4;
+				int start = Integer.parseInt(parts[1]) / 4;
+				int end = Integer.parseInt(parts[2]) / 4 + start;
 
-			if (!section_map.containsKey(name)) {
-				Section current_section = null;
-				for (Section section : _sections) {
-					if (section.getName().equals(name)) {
-						current_section = section;
-						break;
-					}
-				}
+				if (!section_map.containsKey(name)) {
+					Barline start_barline = start_barlines.get(start);
+					Barline end_barline = end_barlines.get(end);
+					Section section = new Section(start_barline, end_barline);
+					section.setName(name);
 
-				if (current_section == null) {
-					return null;
-				}
-
-				List<PlaybackEvent> section_events = new ArrayList<PlaybackEvent>();
-				boolean is_first = true;
-				for (int i = start; i < end + 1; i++) {
+					List<PlaybackEvent> section_events = new ArrayList<PlaybackEvent>();
 					int duration = 4;
-					section_events.add(new PlaybackEvent(current_section,
-							start_barlines.get(i), end_barlines.get(i),
-							duration, is_first));
-					is_first = false;
+					boolean is_first = true;
+					for (int i = start; i < end; i++) {
+						section_events.add(new PlaybackEvent(section,
+								start_barlines.get(i), end_barlines.get(i + 1),
+								duration, is_first));
+						is_first = false;
+					}
+					section_map.put(name, section_events);
 				}
-				section_map.put(name, section_events);
+				events.addAll(section_map.get(name));
 			}
-			events.addAll(section_map.get(name));
-		}
 
-		return events;
+			return events;
+		} catch (Exception e) {
+			return null;
+		}
 	}
 }

@@ -136,4 +136,8 @@ public class Section {
 
 		return new Rectangle(x, y, width, height);
 	}
+
+	public void delete() {
+		_start.getParent().getParent().getParent().removeSection(this);
+	}
 }

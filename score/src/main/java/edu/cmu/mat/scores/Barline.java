@@ -31,13 +31,6 @@ public class Barline implements ScoreObject {
 
 	public Barline(System parent, Barline other, Score score) {
 		this(parent, other.getOffset());
-
-		for (Event event : other.getEvents()) {
-			// XXX: The only events are currently sections.
-			// XXX: Put this into the Events.java file.
-			// Section section = score.addSection(this);
-			// section.setName(((Section) event).getName());
-		}
 	}
 
 	public void setOffset(int offset) {
@@ -64,8 +57,16 @@ public class Barline implements ScoreObject {
 		setState(NOT_ACTIVE);
 	}
 
+	public void delete() {
+		for (Event event : _events) {
+			event.delete();
+		}
+	}
+
 	public void deleteChild(ScoreObject child) {
-		_events.remove(child);
+		if (_events.remove(child)) {
+			child.delete();
+		}
 	}
 
 	public int getOffset() {
