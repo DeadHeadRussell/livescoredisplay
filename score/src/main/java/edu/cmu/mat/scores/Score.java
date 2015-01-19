@@ -327,8 +327,8 @@ public class Score implements ScoreObject {
 			List<Barline> start_barlines = getStartBarlines();
 			List<Barline> end_barlines = getEndBarlines();
 
-			for (int i = 0; i < arrangement_string.length; i++) {
-				String[] parts = arrangement_string[i].split(",");
+			for (String section_string : arrangement_string) {
+				String[] parts = section_string.split(",");
 				String name = parts[0];
 
 				int start = Integer.parseInt(parts[1]) / 4;
@@ -343,9 +343,9 @@ public class Score implements ScoreObject {
 					List<PlaybackEvent> section_events = new ArrayList<PlaybackEvent>();
 					int duration = 4;
 					boolean is_first = true;
-					for (int j = start; j < end; j++) {
-						section_events.add(new PlaybackEvent(section, i,
-								start_barlines.get(j), end_barlines.get(j + 1),
+					for (int i = start; i < end; i++) {
+						section_events.add(new PlaybackEvent(section,
+								start_barlines.get(i), end_barlines.get(i + 1),
 								duration, is_first));
 						is_first = false;
 					}

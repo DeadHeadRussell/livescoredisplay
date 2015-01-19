@@ -226,7 +226,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 		Section current_section = current_event.getSection();
 		Barline current_bar = current_event.getStart();
 
-		JSection current_jsection = _jsections.get(current_event.getPos());
+		JSection current_jsection = _jsections.get(_events_index / 4);
 		System top_system = current_section.getStart().getParent();
 		int image_top = top_system.getTop();
 
