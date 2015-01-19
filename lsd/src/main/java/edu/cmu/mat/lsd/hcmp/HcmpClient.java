@@ -73,11 +73,12 @@ public class HcmpClient implements HcmpMessenger {
 							String[] parts = tokens[0].split("\\.");
 							int id = Integer.parseInt(parts[1]);
 							if (id == player_id) {
+								long current_time = new Date().getTime();
 								double clock = Double.parseDouble(tokens[2]);
 								offset = calculateOffset(last_sync_clock,
-										new Date().getTime(), clock);
-								start_time = new Date().getTime()
-										- (long) (clock * 1000);
+										current_time, clock);
+								start_time = current_time
+										- (long) (offset + clock * 1000);
 							}
 							break;
 						}
