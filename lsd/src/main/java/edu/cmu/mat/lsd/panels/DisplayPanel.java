@@ -215,6 +215,10 @@ public class DisplayPanel implements Panel, HcmpListener {
 	}
 
 	private void moveCursor() {
+		if (_playback_events.isEmpty()) {
+			return;
+		}
+
 		if (_events_index < 0 || _events_index >= _playback_events.size()) {
 			resetTime();
 			return;
