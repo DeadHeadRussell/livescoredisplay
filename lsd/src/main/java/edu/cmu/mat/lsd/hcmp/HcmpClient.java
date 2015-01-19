@@ -24,6 +24,7 @@ public class HcmpClient implements HcmpMessenger {
 	private int player_id = -1;
 	private long last_sync_clock = -1;
 	private double offset = Double.MAX_VALUE;
+	private long start_time = -1;
 
 	private ZMQ.Context context = ZMQ.context(1);
 	private ZMQ.Socket pull = null;
@@ -75,6 +76,8 @@ public class HcmpClient implements HcmpMessenger {
 								double clock = Double.parseDouble(tokens[2]);
 								offset = calculateOffset(last_sync_clock,
 										new Date().getTime(), clock);
+								start_time = new Date().getTime()
+										- (long) (clock * 1000);
 							}
 							break;
 						}
@@ -134,9 +137,11 @@ public class HcmpClient implements HcmpMessenger {
 			private Boolean handleTmMessage(String[] tokens) {
 				if (listener != null) {
 					// double real = new Date().getTime() - offset;
-					double real = Double.parseDouble(tokens[2]);
+					double real = start_time
+							+ (Double.parseDouble(tokens[2]) * 1000);
 					double virtual = Double.parseDouble(tokens[3]);
 					double tempo = Double.parseDouble(tokens[4]) / 1000;
+					// boolean jump = Boolean.parseBoolean(tokens[5]);
 					System.out.println("" + virtual + "," + tempo + "," + real);
 					return listener.handleNewTime(TimeMap.Create(real, virtual,
 							tempo));
@@ -168,7 +173,7 @@ public class HcmpClient implements HcmpMessenger {
 			private Boolean handleArrangementMessage(String[] tokens) {
 				if (listener != null) {
 					String[] arrangement_string = tokens[2].substring(1,
-							tokens[2].length() - 1).split("),(");
+							tokens[2].length() - 1).split("\\),\\(");
 					listener.handleNewArrangement(arrangement_string);
 
 				}
