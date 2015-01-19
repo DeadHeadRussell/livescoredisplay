@@ -6,4 +6,5 @@ public interface HcmpListener {
 	public Boolean handlePlay();
 	public Boolean handlePause();
 	public Boolean handleStop();
+	public Boolean handleNewArrangement(String[] arrangement_string);
 }

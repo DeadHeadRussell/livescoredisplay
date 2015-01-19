@@ -131,14 +131,14 @@ public class NotationToolbar implements Toolbar, ControllerListener {
 		_arrangement.addKeyListener(new KeyListener() {
 			@Override
 			public void keyTyped(KeyEvent e) {
-				Score score = _model.getCurrentScore();
-				if (score != null) {
-					score.saveArrangment(_arrangement.getText());
-				}
 			}
 
 			@Override
 			public void keyReleased(KeyEvent e) {
+				Score score = _model.getCurrentScore();
+				if (score != null) {
+					score.saveArrangment(_arrangement.getText());
+				}
 			}
 
 			@Override

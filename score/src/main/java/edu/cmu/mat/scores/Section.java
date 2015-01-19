@@ -1,15 +1,10 @@
 package edu.cmu.mat.scores;
 
-import java.awt.Image;
 import java.awt.Point;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
+import java.awt.Rectangle;
 import java.util.List;
 
 import com.google.gson.annotations.Expose;
-
-import edu.cmu.mat.scores.events.SectionEndEvent;
-import edu.cmu.mat.scores.events.SectionStartEvent;
 
 public class Section {
 	@Expose
@@ -35,9 +30,6 @@ public class Section {
 		List<Barline> end_barlines = score.getEndBarlines();
 		_start_index = start_barlines.indexOf(_start);
 		_end_index = end_barlines.indexOf(_end);
-
-		_start.addEvent(new SectionStartEvent(_start, this));
-		_end.addEvent(new SectionEndEvent(_end));
 	}
 
 	public Section(Score score, Section other) {
@@ -93,70 +85,24 @@ public class Section {
 		return _state;
 	}
 
-	public Image getSystemsImage() {
-		Score score = _start.getParent().getParent().getParent();
-
+	public java.awt.Image getImage() {
 		Page start_page = _start.getParent().getParent();
 		Page end_page = _end.getParent().getParent();
-		int start_page_number = score.getPages().indexOf(start_page);
-		int end_page_number = score.getPages().indexOf(end_page);
 
-		System start_system = _start.getParent();
-		System end_system = _end.getParent();
+		int top = _start.getParent().getTop();
+		int bottom = _end.getParent().getBottom();
 
-		// XXX: Only support sections within one page for now.
-		if (end_page_number == start_page_number) {
-			Image image = start_page.getImage().getImage();
-			return cropSingle(image, start_system.getTop(),
-					end_system.getBottom());
+		if (start_page == end_page) {
+			return start_page.getImage().crop(top, bottom);
 		} else {
-			return mergeMultiple(score, start_page_number, end_page_number,
-					start_system.getTop(), end_system.getBottom());
-		}
-	}
+			Score score = start_page.getParent();
+			List<Page> pages = score.getPages();
+			int start_index = pages.indexOf(start_page);
+			int end_index = pages.indexOf(end_page);
 
-	private Image cropSingle(Image image, int top, int bottom) {
-		int width = image.getWidth(null);
-		int height = bottom - top;
-
-		BufferedImage cropped = new BufferedImage(width, height,
-				BufferedImage.TYPE_INT_ARGB);
-		// XXX: Minus 8 is a hack since the coordinates are off between the
-		// image and the frame that the image is displayed in in notation mode.
-		top = Math.max(top - 8, 0);
-		cropped.getGraphics().drawImage(image, 0, 0, width, height, 0, top,
-				width, top + height, null);
-		return cropped;
-	}
-
-	private Image mergeMultiple(Score score, int start_page_number,
-			int end_page_number, int system_top, int system_bottom) {
-		List<Image> images = new ArrayList<Image>(end_page_number
-				- start_page_number + 1);
-		int height = 0;
-		for (int i = start_page_number; i < end_page_number + 1; i++) {
-			Image image = score.getPage(i).getImage().getImage();
-			int top = 0;
-			int bottom = image.getHeight(null);
-			if (i == start_page_number) {
-				top = system_top;
-			} else if (i == end_page_number) {
-				bottom = system_bottom;
-			}
-			height += (bottom - top);
-			images.add(cropSingle(image, top, bottom));
+			List<Page> sectionPages = pages.subList(start_index, end_index + 1);
+			return Image.MERGE(sectionPages, top, bottom);
 		}
-		int width = images.get(0).getWidth(null);
-		BufferedImage merged = new BufferedImage(width, height,
-				BufferedImage.TYPE_INT_ARGB);
-		int y = 0;
-		for (Image image : images) {
-			int image_height = image.getHeight(null);
-			merged.getGraphics().drawImage(image, 0, y, width, image_height, 0,
-					0, width, image_height, null);
-			y += height;
-		}
-		return merged;
 	}
 
 	public void normalize() {
@@ -167,18 +113,27 @@ public class Section {
 		// Does nothing.
 	}
 
-	public static Image GET_IMAGE(Section section, Section end) {
-		// TODO Auto-generated method stub
-		return null;
+	public Rectangle getTopRectangle() {
+		System start_system = _start.getParent();
+		int width = _start.getOffset();
+		int height = start_system.getBottom() - start_system.getTop();
+		return new Rectangle(0, 0, width, height);
 	}
 
-	public Point getTopLeft() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	public Rectangle getBottomRectangle() {
+		System end_system = _end.getParent();
+		Page start_page = _start.getParent().getParent();
+		Page end_page = end_system.getParent();
 
-	public Point getBottomRight() {
-		// TODO Auto-generated method stub
-		return null;
+		int x = _end.getOffset();
+		int y = end_system.getTop();
+		if (start_page == end_page) {
+			y -= _start.getParent().getTop();
+		}
+
+		int width = end_page.getImage().getImage().getWidth(null) - x;
+		int height = end_system.getBottom() - end_system.getTop();
+
+		return new Rectangle(x, y, width, height);
 	}
 }

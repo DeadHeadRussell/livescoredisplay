@@ -6,8 +6,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -19,11 +21,13 @@ import edu.cmu.mat.parsers.JsonParser;
 import edu.cmu.mat.parsers.exceptions.CompilerException;
 import edu.cmu.mat.scores.events.Event;
 import edu.cmu.mat.scores.events.EventTypeAdapter;
+import edu.cmu.mat.scores.events.SectionEndEvent;
+import edu.cmu.mat.scores.events.SectionStartEvent;
 
 public class Score implements ScoreObject {
 	private static JsonParser PARSER = new JsonParser();
 	public static Gson GSON = new GsonBuilder()
-			.excludeFieldsWithoutExposeAnnotation()
+			.excludeFieldsWithoutExposeAnnotation().setPrettyPrinting()
 			.registerTypeAdapter(Event.class, new EventTypeAdapter()).create();
 
 	// XXX: Sections will need some good way to be exported and imported with
@@ -64,7 +68,12 @@ public class Score implements ScoreObject {
 		}
 
 		for (Section section : other.getSections()) {
-			addSection(new Section(this, section));
+			Section new_section = new Section(this, section);
+			addSection(new_section);
+			Barline start = new_section.getStart();
+			Barline end = new_section.getEnd();
+			start.addEvent(new SectionStartEvent(start, new_section));
+			end.addEvent(new SectionEndEvent(end));
 		}
 
 		// Initializing arrangements has to come after initializing the pages
@@ -90,6 +99,8 @@ public class Score implements ScoreObject {
 		}
 
 		Section new_section = new Section(start, end);
+		start.addEvent(new SectionStartEvent(start, new_section));
+		end.addEvent(new SectionEndEvent(end));
 
 		for (int i = 0; i < _sections.size(); i++) {
 			Section section = _sections.get(i);
@@ -284,5 +295,49 @@ public class Score implements ScoreObject {
 			}
 		}
 		return barlines;
+	}
+
+	public List<PlaybackEvent> createPlaybackEvents(String[] arrangement_string) {
+		List<PlaybackEvent> events = new LinkedList<PlaybackEvent>();
+
+		Map<String, List<PlaybackEvent>> section_map = new HashMap<String, List<PlaybackEvent>>();
+		List<Barline> start_barlines = getStartBarlines();
+		List<Barline> end_barlines = getEndBarlines();
+
+		for (String section_string : arrangement_string) {
+			String[] parts = section_string.split(",");
+			String name = parts[0];
+
+			int start = Integer.parseInt(parts[1]) / 4;
+			int end = (Integer.parseInt(parts[2]) - start) / 4;
+
+			if (!section_map.containsKey(name)) {
+				Section current_section = null;
+				for (Section section : _sections) {
+					if (section.getName().equals(name)) {
+						current_section = section;
+						break;
+					}
+				}
+
+				if (current_section == null) {
+					return null;
+				}
+
+				List<PlaybackEvent> section_events = new ArrayList<PlaybackEvent>();
+				boolean is_first = true;
+				for (int i = start; i < end + 1; i++) {
+					int duration = 4;
+					section_events.add(new PlaybackEvent(current_section,
+							start_barlines.get(i), end_barlines.get(i),
+							duration, is_first));
+					is_first = false;
+				}
+				section_map.put(name, section_events);
+			}
+			events.addAll(section_map.get(name));
+		}
+
+		return events;
 	}
 }

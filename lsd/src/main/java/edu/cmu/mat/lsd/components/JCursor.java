@@ -7,8 +7,6 @@ import java.awt.Graphics;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
-import edu.cmu.mat.scores.Arrangement;
-
 public class JCursor extends JPanel {
 	private static final long serialVersionUID = -3771280671369537552L;
 
@@ -16,11 +14,8 @@ public class JCursor extends JPanel {
 	private int _x;
 	private int _y;
 
-	public JCursor() {
+	public JCursor(JComponent parent) {
 		resetTime();
-	}
-
-	public JCursor(JComponent parent, Arrangement arrangement) {
 		_parent = parent;
 	}
 

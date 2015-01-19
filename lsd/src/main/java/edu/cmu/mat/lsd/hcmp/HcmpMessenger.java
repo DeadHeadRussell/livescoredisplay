@@ -6,5 +6,4 @@ public interface HcmpMessenger {
 	public void join();
 	public void synchronize();
 	public void sendArrangement(Score score);
-	public void getArrangement();
 }

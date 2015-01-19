@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.Point;
+import java.awt.Rectangle;
 
 import javax.swing.JPanel;
 
@@ -16,7 +16,6 @@ public class JSection extends JPanel {
 	private static Color COLOR_FADE = new Color(255, 255, 255, 150);
 
 	private Section _section;
-	private Section _end;
 	private Image _image;
 	private int _width;
 	private int _height;
@@ -26,12 +25,11 @@ public class JSection extends JPanel {
 	private int _end_x;
 	private int _end_y;
 
-	public JSection(Section section, Section end) {
+	public JSection(Section section) {
 		_section = section;
-		_end = end;
-		_image = Section.GET_IMAGE(section, end);
-		//_width = _image.getWidth(this);
-		//_height = _image.getHeight(this);
+		_image = _section.getImage();
+		_width = _image.getWidth(this);
+		_height = _image.getHeight(this);
 
 		setBackground(Color.WHITE);
 	}
@@ -57,43 +55,15 @@ public class JSection extends JPanel {
 
 		graphics.drawImage(_image, 0, 0, this);
 
-		Point top_left = _section.getTopLeft();
-		Point bottom_right = _end.getBottomRight();
-
+		Rectangle top = _section.getTopRectangle();
+		Rectangle bottom = _section.getBottomRectangle();
 		graphics.setColor(COLOR_FADE);
-		graphics.fillRect(0, 0, top_left.x - 8, top_left.y);
-		graphics.fillRect(bottom_right.x - 8, bottom_right.y, _width, _height);
+		graphics.fillRect(top.x - 8, top.y, top.width, top.height);
+		graphics.fillRect(bottom.x - 8, bottom.y, bottom.width, bottom.height);
 
 		return;
 	}
-/*
-	{
-		Barline start_bar = _section.getParent();
-		System start_system = start_bar.getParent();
-		Barline end_bar = null;
-		System end_system = null;
-		if (_next != null) {
-			end_bar = _next.getParent();
-			end_system = end_bar.getParent();
-		}
 
-		graphics.setColor(COLOR_FADE);
-
-		int start_height = start_system.getBottom() - start_system.getTop();
-		_start_x = start_bar.getOffset() - 8;
-		_start_y = start_height;
-		graphics.fillRect(0, 0, _start_x, _start_y);
-
-		if (end_bar != null) {
-			int top = end_system.getTop() - start_system.getTop();
-			int width = _width - end_bar.getOffset() + 8;
-			int height = end_system.getBottom() - end_system.getTop();
-			_end_x = end_bar.getOffset() - 8;
-			_end_y = top;
-			graphics.fillRect(_end_x, _end_y, width, height);
-		}
-	}
-*/
 	public int getStartX() {
 		return _start_x;
 	}

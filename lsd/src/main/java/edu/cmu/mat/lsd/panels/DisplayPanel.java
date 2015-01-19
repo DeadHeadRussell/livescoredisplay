@@ -3,9 +3,10 @@ package edu.cmu.mat.lsd.panels;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
@@ -17,12 +18,10 @@ import javax.swing.Timer;
 import edu.cmu.mat.lsd.Model;
 import edu.cmu.mat.lsd.components.JCursor;
 import edu.cmu.mat.lsd.components.JSection;
-import edu.cmu.mat.lsd.hcmp.HcmpClient;
 import edu.cmu.mat.lsd.hcmp.HcmpListener;
 import edu.cmu.mat.lsd.hcmp.TimeMap;
-import edu.cmu.mat.scores.Arrangement;
 import edu.cmu.mat.scores.Barline;
-import edu.cmu.mat.scores.Score;
+import edu.cmu.mat.scores.PlaybackEvent;
 import edu.cmu.mat.scores.Section;
 import edu.cmu.mat.scores.System;
 
@@ -34,12 +33,14 @@ public class DisplayPanel implements Panel, HcmpListener {
 	private JLayeredPane _layers = new JLayeredPane();
 
 	private int _current_beat = 0;
-	List<JSection> _jsections;
+	Map<String, JSection> _jsection_map;
 
 	private TimeMap _time_map;
 	private Timer _play_timer;
 	private JCursor _cursor;
 	private int _playback_id = 0;
+	private List<PlaybackEvent> _playback_events;
+	private int _events_index = -1;
 
 	public DisplayPanel(Model model) {
 		_model = model;
@@ -52,7 +53,11 @@ public class DisplayPanel implements Panel, HcmpListener {
 		_scroller = new JScrollPane(_layers);
 
 		_layers.setVisible(true);
-		_cursor = new JCursor();
+
+		_cursor = new JCursor(_panel);
+		_cursor.setOpaque(false);
+		_cursor.setSize(_layers.getPreferredSize());
+		_layers.add(_cursor, 2);
 
 		onUpdateScore();
 		onUpdateView();
@@ -69,39 +74,6 @@ public class DisplayPanel implements Panel, HcmpListener {
 	}
 
 	public void onUpdateScore() {
-		_panel.removeAll();
-
-		Score score = _model.getCurrentScore();
-		if (score == null) {
-			return;
-		}
-		List<Section> arrangement = score.getArrangementList();
-		if (arrangement == null) {
-			return;
-		}
-
-		_jsections = new ArrayList<JSection>(arrangement.size());
-		/*
-		 * List<Section> sections = score.getSections(); for (Section section :
-		 * arrangement) { int index = sections.indexOf(section); Section next =
-		 * index < sections.size() - 1 ? sections .get(index + 1) : null;
-		 * JSection jsection = new JSection(section, next);
-		 * _jsections.add(jsection); _panel.add(jsection); }
-		 */
-
-		_layers.remove(_cursor);
-
-		_cursor = new JCursor(_panel, score.getArrangement());
-		_cursor.setOpaque(false);
-		_cursor.setLocation(0, 0);
-		_cursor.setSize(_layers.getPreferredSize());
-
-		_layers.add(_cursor, 2);
-		_layers.moveToFront(_cursor);
-
-		_current_beat = 0;
-
-		redraw();
 	}
 
 	public void onUpdateView() {
@@ -140,14 +112,50 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	@Override
 	public Boolean handlePause() {
-		stop();
+		pause();
 		return true;
 	}
 
 	@Override
 	public Boolean handleStop() {
-		stop();
+		pause();
 		resetTime();
+		return true;
+	}
+
+	@Override
+	public Boolean handleNewArrangement(String[] arrangement_string) {
+		_playback_events = _model.getCurrentScore().createPlaybackEvents(
+				arrangement_string);
+
+		if (_playback_events == null) {
+			java.lang.System.err
+					.println("Invalid section name found in arrangement!");
+			return false;
+		}
+
+		_panel.removeAll();
+
+		_jsection_map = new HashMap<String, JSection>();
+
+		for (PlaybackEvent event : _playback_events) {
+			if (event.isSectionStart()) {
+				JSection jsection = new JSection(event.getSection());
+				_jsection_map.put(event.getSection().getName(), jsection);
+				_panel.add(jsection);
+			}
+		}
+
+		_cursor.setLocation(0, 0);
+		_layers.moveToFront(_cursor);
+
+		_current_beat = 0;
+
+		redraw();
+
+		if (_play_timer != null) {
+			restart();
+		}
 		return true;
 	}
 
@@ -160,6 +168,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 		if (next_event_time < 0) {
 			return;
 		}
+		_events_index++;
 
 		double next_real_time = _time_map.from(next_event_time);
 		int next_time = (int) (next_real_time - new Date().getTime());
@@ -188,16 +197,13 @@ public class DisplayPanel implements Panel, HcmpListener {
 			_cursor.resetTime();
 			return;
 		}
-		Arrangement arrangement = _model.getCurrentScore().getArrangement();
-		Barline current_bar = arrangement.getBarline(_current_beat);
-		if (current_bar == null) {
-			_cursor.resetTime();
-			return;
-		}
 
-		int i = arrangement.getSectionNumber(_current_beat);
-		Section current_section = arrangement.getList().get(i);
-		JSection current_jsection = _jsections.get(i);
+		PlaybackEvent current_event = _playback_events.get(_events_index);
+		Section current_section = current_event.getSection();
+		Barline current_bar = current_event.getStart();
+
+		JSection current_jsection = _jsection_map
+				.get(current_section.getName());
 		System top_system = current_section.getStart().getParent();
 		int image_top = top_system.getTop();
 
@@ -210,8 +216,10 @@ public class DisplayPanel implements Panel, HcmpListener {
 	}
 
 	private double getNextTime() {
-		return _model.getCurrentScore().getArrangement()
-				.getNextBarlineBeat(_current_beat);
+		if (_events_index == -1) {
+			return 0;
+		}
+		return _playback_events.get(_events_index).getDuration();
 	}
 
 	private void onEvent(double event_time) {
@@ -223,7 +231,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 		fireNextEvent(_playback_id);
 	}
 
-	private void stop() {
+	private void pause() {
 		_playback_id++;
 		if (_play_timer != null) {
 			_play_timer.stop();
@@ -231,7 +239,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 	}
 
 	private void restart() {
-		stop();
+		pause();
 		start();
 	}
 

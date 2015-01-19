@@ -108,6 +108,8 @@ public class HcmpClient implements HcmpMessenger {
 					return handlePauseMessage(tokens);
 				case "stop":
 					return handleStopMessage(tokens);
+				case "arrangement":
+					return handleArrangementMessage(tokens);
 				}
 				return false;
 			}
@@ -163,6 +165,16 @@ public class HcmpClient implements HcmpMessenger {
 				}
 				return false;
 			}
+
+			private Boolean handleArrangementMessage(String[] tokens) {
+				if (listener != null) {
+					String[] arrangement_string = tokens[2].substring(1,
+							tokens[2].length() - 1).split("),(");
+					listener.handleNewArrangement(arrangement_string);
+
+				}
+				return false;
+			}
 		});
 		timer.start();
 		join();
@@ -212,11 +224,6 @@ public class HcmpClient implements HcmpMessenger {
 		last_sync_clock = new Date().getTime();
 		String message = "plr." + String.valueOf(player_id) + " resync";
 		sendMessage(message);
-	}
-
-	@Override
-	public void getArrangement() {
-		sendMessage("hcmp get_arrangement");
 	}
 
 	@Override

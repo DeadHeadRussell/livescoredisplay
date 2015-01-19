@@ -47,6 +47,10 @@ public class NotationPanel implements Panel {
 	}
 
 	public void onUpdateView() {
+		if (_model.getCurrentView() == Model.VIEW_NOTATION) {
+			_scroller.revalidate();
+			_scroller.repaint();
+		}
 	}
 
 	public void onUpdateLibraryPath() {
