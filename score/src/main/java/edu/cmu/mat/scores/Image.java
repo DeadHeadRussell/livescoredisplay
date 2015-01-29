@@ -1,5 +1,6 @@
 package edu.cmu.mat.scores;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +14,19 @@ public class Image {
 
 	public Image(BufferedImage image) {
 		_originalImage = image;
-		_resizedImage = _originalImage;
 		// _resizedImage = image.getScaledInstance(image.getWidth(),
 		// image.getHeight(), BufferedImage.SCALE_SMOOTH);
 
+		int width = image.getWidth();
+		int height = image.getHeight();
+		BufferedImage coloured = new BufferedImage(width, height,
+				BufferedImage.TYPE_INT_ARGB);
+		coloured.getGraphics().setColor(Color.WHITE);
+		coloured.getGraphics().fillRect(0, 0, width, height);
+		coloured.getGraphics().drawImage(image, 0, 0, width, height, 0, 0,
+				width, height, null);
+
+		_resizedImage = coloured;
 	}
 
 	public void resize(int size, int dimension) {
@@ -36,6 +46,15 @@ public class Image {
 
 		_resizedImage = _originalImage.getScaledInstance(width, height,
 				BufferedImage.SCALE_SMOOTH);
+
+		BufferedImage coloured = new BufferedImage(width, height,
+				BufferedImage.TYPE_INT_ARGB);
+		coloured.getGraphics().setColor(Color.WHITE);
+		coloured.getGraphics().fillRect(0, 0, width, height);
+		coloured.getGraphics().drawImage(_resizedImage, 0, 0, width, height, 0,
+				0, width, height, null);
+
+		_resizedImage = coloured;
 	}
 
 	public java.awt.Image getImage() {

@@ -254,7 +254,7 @@ public class HcmpClient implements HcmpMessenger {
 			if (section.isRepeat()) {
 				int new_duration = start_beat - next_start;
 
-				if (next_duration > 0) {
+				if (new_duration > 0 && next_start >= 0) {
 					message_parts.add("(" + previousName + ","
 							+ (next_start + offset) + "," + new_duration + ")");
 				}
