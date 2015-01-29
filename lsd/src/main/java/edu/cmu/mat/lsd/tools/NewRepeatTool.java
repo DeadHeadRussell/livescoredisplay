@@ -25,7 +25,7 @@ public class NewRepeatTool extends Tool {
 
 		Barline end_barline = Tool.GetRightBarline(page, event.getPoint());
 		if (end_barline != _start_barline && end_barline != null) {
-			_model.addSection(_start_barline, end_barline, true);
+			_model.addRepeat(_start_barline, end_barline);
 			end_barline.setInactive();
 			_start_barline.setInactive();
 			_start_barline = null;

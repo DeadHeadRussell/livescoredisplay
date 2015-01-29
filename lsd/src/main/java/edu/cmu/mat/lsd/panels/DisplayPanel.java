@@ -42,6 +42,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 	private int _playback_id = 0;
 	private List<PlaybackEvent> _playback_events = new ArrayList<PlaybackEvent>();
 	private int _events_index = 0;
+	private int _current_jsection_index = -1;
 
 	public DisplayPanel(Model model) {
 		_model = model;
@@ -79,13 +80,11 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	public void onUpdateView() {
 		if (_model.getCurrentView() == Model.VIEW_DISPLAY) {
-			handleNewArrangement(new String[] { "A,0,20", "A,0,20", "B,20,32",
-					"C,52,16", "D,68,8", "D,68,8", "E,76,16" });
-
-			handleNewPosition(0);
-			handleNewTime(TimeMap.Create(new Date().getTime(), 0, 0.0072));
-			handlePlay();
-
+			arran(new String[] { "A,0,20", "A,0,20", "B,20,32", "C,52,16" });
+			/*
+			 * handleNewPosition(0); handleNewTime(TimeMap.Create(new
+			 * Date().getTime(), 0, 0.0072)); handlePlay();
+			 */
 			_scroller.revalidate();
 			_scroller.repaint();
 		} else {
@@ -135,6 +134,10 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	@Override
 	public Boolean handleNewArrangement(String[] arrangement_string) {
+		return true;
+	}
+
+	private Boolean arran(String[] arrangement_string) {
 		List<PlaybackEvent> new_events = _model.getCurrentScore()
 				.createPlaybackEvents(arrangement_string);
 
@@ -214,7 +217,12 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	private void setTime(int beat) {
 		int so_far = 0;
+		_current_jsection_index = -2;
 		for (PlaybackEvent event : _playback_events) {
+			if (event.isSectionStart()) {
+				_current_jsection_index++;
+			}
+
 			so_far += event.getDuration();
 			if (so_far > beat) {
 				_events_index = _playback_events.indexOf(event);
@@ -238,7 +246,11 @@ public class DisplayPanel implements Panel, HcmpListener {
 		Section current_section = current_event.getSection();
 		Barline current_bar = current_event.getStart();
 
-		JSection current_jsection = _jsections.get(_events_index / 4);
+		if (current_event.isSectionStart()) {
+			_current_jsection_index++;
+		}
+
+		JSection current_jsection = _jsections.get(_current_jsection_index);
 		System top_system = current_section.getStart().getParent();
 		int image_top = top_system.getTop();
 

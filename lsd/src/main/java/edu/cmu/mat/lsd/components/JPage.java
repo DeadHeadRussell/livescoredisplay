@@ -191,9 +191,6 @@ public class JPage extends JPanel {
 	private int drawSectionStart(Graphics graphics, System system,
 			Barline barline, Section section, int offset) {
 		String section_name = section.getName() + " (";
-		if (section.isRepeat()) {
-			section_name = "|:";
-		}
 		int string_width = FONT_METRICS.stringWidth(section_name);
 		int string_height = FONT_METRICS.getHeight();
 		int width = string_width + 6;
@@ -219,9 +216,6 @@ public class JPage extends JPanel {
 	private int drawSectionEnd(Graphics graphics, System system,
 			Barline barline, Section section, int offset) {
 		String section_name = ")";
-		if (section.isRepeat()) {
-			section_name = ":|";
-		}
 		int string_width = FONT_METRICS.stringWidth(section_name);
 		int string_height = FONT_METRICS.getHeight();
 		int width = string_width + 6;

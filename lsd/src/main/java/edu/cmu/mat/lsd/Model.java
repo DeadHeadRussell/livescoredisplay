@@ -298,10 +298,8 @@ public class Model implements DisplayMenuListener {
 		_controller.modelUpdated();
 	}
 
-	public void addSection(Barline start_barline, Barline end_barline,
-			boolean repeat) {
-		getCurrentScore().addSection(start_barline, end_barline)
-				.setRepeat(true);
+	public void addRepeat(Barline start_barline, Barline end_barline) {
+		getCurrentScore().addRepeat(start_barline, end_barline);
 		_controller.modelUpdated();
 	}
 

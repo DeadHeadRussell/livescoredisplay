@@ -3,8 +3,10 @@ package edu.cmu.mat.lsd.hcmp;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.Timer;
@@ -240,51 +242,50 @@ public class HcmpClient implements HcmpMessenger {
 		List<Barline> end_barlines = score.getEndBarlines();
 
 		int offset = 0;
-		String previousName = "";
-
-		int next_start = -1;
-		int next_duration = -1;
 
 		for (Section section : arrangement) {
+			String name = section.getName();
 			int start_beat = start_barlines.indexOf(section.getStart()) * 4;
 			int end_beat = end_barlines.indexOf(section.getEnd()) * 4;
 			int duration = end_beat - start_beat;
+			int initial_end = end_beat;
 
-			String name = section.getName();
-			if (section.isRepeat()) {
-				int new_duration = start_beat - next_start;
+			List<Integer> start_repeats = new ArrayList<Integer>(section
+					.getRepeats().keySet());
+			start_repeats.sort(new Comparator<Integer>() {
+				public int compare(Integer arg0, Integer arg1) {
+					return arg0 - arg1;
+				}
+			});
 
-				if (new_duration > 0 && next_start >= 0) {
-					message_parts.add("(" + previousName + ","
-							+ (next_start + offset) + "," + new_duration + ")");
+			for (int start_repeat : start_repeats) {
+				int end_repeat = section.getRepeats().get(start_repeat) * 4;
+				start_repeat *= 4;
+				int repeat_duration = end_repeat - start_repeat;
+
+				int new_duration = start_repeat - start_beat;
+				if (new_duration > 0) {
+					message_parts.add("(" + name + "," + (start_beat + offset)
+							+ "," + new_duration + ")");
 				}
 
-				message_parts.add("(" + previousName + ","
-						+ (start_beat + offset) + "," + duration + ")");
-				offset += duration;
-				if (end_beat < (next_start + next_duration)) {
-					message_parts.add("(" + previousName + ","
-							+ (start_beat + offset) + "," + duration + ")");
-					next_start = end_beat;
-					next_duration = next_duration - duration - new_duration;
-				} else {
-					next_start = start_beat;
-					next_duration = duration;
-				}
-			} else {
-				if (next_duration > 0) {
-					message_parts
-							.add("(" + previousName + ","
-									+ (next_start + offset) + ","
-									+ next_duration + ")");
-				}
-				previousName = name;
-				next_start = start_beat;
-				next_duration = duration;
+				message_parts.add("(" + name + "," + (start_repeat + offset)
+						+ "," + repeat_duration + ")");
+				offset += repeat_duration;
+
+				start_beat = start_repeat;
+				end_beat = end_repeat;
+				duration = repeat_duration;
+			}
+
+			message_parts.add("(" + name + "," + (start_beat + offset) + ","
+					+ duration + ")");
+
+			if (initial_end > end_beat) {
+				message_parts.add("(" + name + "," + (end_beat + offset) + ","
+						+ (initial_end - end_beat) + ")");
 			}
 		}
-		message_parts.add("(" + previousName + "," + (next_start + offset)
-				+ "," + next_duration + ")");
 
 		sendMessage("hcmp arrangement " + Joiner.on(',').join(message_parts));
 	}

@@ -2,9 +2,15 @@ package edu.cmu.mat.scores;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.google.gson.annotations.Expose;
+
+import edu.cmu.mat.scores.events.RepeatEndEvent;
+import edu.cmu.mat.scores.events.RepeatStartEvent;
 
 public class Section {
 	@Expose
@@ -14,7 +20,7 @@ public class Section {
 	@Expose
 	private int _end_index;
 	@Expose
-	private boolean _repeat;
+	private Map<Integer, Integer> _repeats = new HashMap<Integer, Integer>();
 
 	private Barline _start;
 	private Barline _end;
@@ -38,17 +44,37 @@ public class Section {
 		_name = other._name;
 		_start_index = other._start_index;
 		_end_index = other._end_index;
-		_repeat = other._repeat;
 
 		List<Barline> start_barlines = score.getStartBarlines();
 		List<Barline> end_barlines = score.getEndBarlines();
 		_start = start_barlines.get(_start_index);
 		_end = end_barlines.get(_end_index);
+
+		if (other._repeats != null) {
+			for (Entry<Integer, Integer> set : other._repeats.entrySet()) {
+				_repeats.put(set.getKey(), set.getValue());
+				RepeatStartEvent start_event = new RepeatStartEvent();
+				RepeatEndEvent end_event = new RepeatEndEvent(start_event);
+				start_barlines.get(set.getKey()).addEvent(start_event);
+				end_barlines.get(set.getValue()).addEvent(end_event);
+			}
+		}
 	}
 
-	public Section setRepeat(boolean repeat) {
-		_repeat = repeat;
-		return this;
+	public void addRepeat(Barline start, Barline end) {
+		Score score = getStart().getParent().getParent().getParent();
+		List<Barline> start_barlines = score.getStartBarlines();
+		List<Barline> end_barlines = score.getEndBarlines();
+		_repeats.put(start_barlines.indexOf(start), end_barlines.indexOf(end));
+
+		RepeatStartEvent start_event = new RepeatStartEvent();
+		RepeatEndEvent end_event = new RepeatEndEvent(start_event);
+		start.addEvent(start_event);
+		end.addEvent(end_event);
+	}
+
+	public Map<Integer, Integer> getRepeats() {
+		return _repeats;
 	}
 
 	public Section setName(String name) {
@@ -88,10 +114,6 @@ public class Section {
 
 	public String getName() {
 		return _name;
-	}
-
-	public boolean isRepeat() {
-		return _repeat;
 	}
 
 	public int getState() {

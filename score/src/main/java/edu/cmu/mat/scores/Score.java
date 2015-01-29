@@ -20,9 +20,7 @@ import com.google.gson.annotations.Expose;
 import edu.cmu.mat.parsers.JsonParser;
 import edu.cmu.mat.parsers.exceptions.CompilerException;
 import edu.cmu.mat.scores.events.Event;
-import edu.cmu.mat.scores.events.Event.Type;
 import edu.cmu.mat.scores.events.EventTypeAdapter;
-import edu.cmu.mat.scores.events.RepeatEndEvent;
 import edu.cmu.mat.scores.events.SectionEndEvent;
 import edu.cmu.mat.scores.events.SectionStartEvent;
 
@@ -116,6 +114,21 @@ public class Score implements ScoreObject {
 		return new_section;
 	}
 
+	public Section addRepeat(Barline start, Barline end) {
+		if (start == null || end == null) {
+			return null;
+		}
+
+		for (int i = 0; i < _sections.size(); i++) {
+			Section section = _sections.get(i);
+			if (compareLocation(section.getStart(), start) >= 0) {
+				section.addRepeat(start, end);
+				return section;
+			}
+		}
+		return null;
+	}
+
 	public void addSection(Section new_section) {
 		for (int i = 0; i < _sections.size(); i++) {
 			Section section = _sections.get(i);
@@ -133,6 +146,7 @@ public class Score implements ScoreObject {
 	}
 
 	public void removeSection(Section section) {
+		// This does not yet remove any associated repeat events.
 		if (section == null) {
 			return;
 		}
@@ -351,11 +365,12 @@ public class Score implements ScoreObject {
 					is_first = false;
 				}
 
-				events.addAll(section_map.get(name));
+				events.addAll(section_events);
 			}
 
 			return events;
 		} catch (Exception e) {
+			e.printStackTrace();
 			return null;
 		}
 	}
