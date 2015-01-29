@@ -79,6 +79,12 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	public void onUpdateView() {
 		if (_model.getCurrentView() == Model.VIEW_DISPLAY) {
+			handleNewArrangement(new String[] { "A,0,20", "A,0,20", "B,20,32",
+					"A2,52,16", "C,68,16", "C,68,16", "A3,84,16" });
+			handleNewPosition(0);
+			handleNewTime(TimeMap.Create(new Date().getTime(), 0, 0.0072));
+			handlePlay();
+
 			_scroller.revalidate();
 			_scroller.repaint();
 		} else {

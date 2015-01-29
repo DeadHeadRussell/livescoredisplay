@@ -8,11 +8,13 @@ import com.google.gson.annotations.Expose;
 
 public class Section {
 	@Expose
-	private String _name = "  ";
+	private String _name = "";
 	@Expose
 	private int _start_index;
 	@Expose
 	private int _end_index;
+	@Expose
+	private boolean _repeat;
 
 	private Barline _start;
 	private Barline _end;
@@ -36,6 +38,7 @@ public class Section {
 		_name = other._name;
 		_start_index = other._start_index;
 		_end_index = other._end_index;
+		_repeat = other._repeat;
 
 		List<Barline> start_barlines = score.getStartBarlines();
 		List<Barline> end_barlines = score.getEndBarlines();
@@ -43,8 +46,14 @@ public class Section {
 		_end = end_barlines.get(_end_index);
 	}
 
-	public void setName(String name) {
+	public Section setRepeat(boolean repeat) {
+		_repeat = repeat;
+		return this;
+	}
+
+	public Section setName(String name) {
 		_name = name;
+		return this;
 	}
 
 	public void setState(int state) {
@@ -79,6 +88,10 @@ public class Section {
 
 	public String getName() {
 		return _name;
+	}
+
+	public boolean isRepeat() {
+		return _repeat;
 	}
 
 	public int getState() {

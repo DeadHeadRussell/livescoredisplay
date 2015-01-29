@@ -22,6 +22,9 @@ import edu.cmu.mat.scores.Page;
 import edu.cmu.mat.scores.Section;
 import edu.cmu.mat.scores.System;
 import edu.cmu.mat.scores.events.Event;
+import edu.cmu.mat.scores.events.RepeatEndEvent;
+import edu.cmu.mat.scores.events.RepeatStartEvent;
+import edu.cmu.mat.scores.events.SectionEndEvent;
 import edu.cmu.mat.scores.events.SectionStartEvent;
 
 public class JPage extends JPanel {
@@ -45,6 +48,7 @@ public class JPage extends JPanel {
 	private static Color COLOR_BAR_ACTIVE = COLOR_LIGHT;
 	private static Color COLOR_BARLINE_ACTIVE = new Color(0, 0, 220, 80);
 	private static Color COLOR_SECTION = new Color(200, 200, 200, 250);
+	private static Color COLOR_REPEAT = new Color(200, 200, 200, 250);
 
 	private Model _model;
 	private JPage _jpage;
@@ -93,18 +97,31 @@ public class JPage extends JPanel {
 				List<Event> events = barline.getEvents();
 				int offset = -5;
 				for (Event event : events) {
-					// TODO: All events are currently sections. This must change
-					// when this is not the case.
 					switch (event.getType()) {
 					case SECTION_START:
-						Section section = ((SectionStartEvent) event)
+						Section section_start = ((SectionStartEvent) event)
 								.getSection();
 						offset = drawSectionStart(graphics, system, barline,
-								section.getName(), offset);
+								section_start, offset);
 						break;
 					case SECTION_END:
+						Section section_end = ((SectionEndEvent) event)
+								.getSection();
 						offset = drawSectionEnd(graphics, system, barline,
-								offset);
+								section_end, offset);
+						break;
+
+					case REPEAT_START:
+						RepeatStartEvent repeat_start = ((RepeatStartEvent) event);
+						offset = drawRepeatStart(graphics, system, barline,
+								repeat_start, offset);
+						break;
+
+					case REPEAT_END:
+						RepeatEndEvent repeat_end = ((RepeatEndEvent) event);
+						offset = drawRepeatEnd(graphics, system, barline,
+								repeat_end, offset);
+
 						break;
 					default:
 						break;
@@ -171,9 +188,12 @@ public class JPage extends JPanel {
 
 	}
 
-	private int drawSection(Graphics graphics, System system, Barline barline,
-			Section section, int offset) {
-		String section_name = section.getName();
+	private int drawSectionStart(Graphics graphics, System system,
+			Barline barline, Section section, int offset) {
+		String section_name = section.getName() + " (";
+		if (section.isRepeat()) {
+			section_name = "|:";
+		}
 		int string_width = FONT_METRICS.stringWidth(section_name);
 		int string_height = FONT_METRICS.getHeight();
 		int width = string_width + 6;
@@ -188,7 +208,7 @@ public class JPage extends JPanel {
 
 		graphics.setColor(Color.BLACK);
 		if (section.getState() == Section.ACTIVE) {
-			graphics.setColor(Color.white);
+			graphics.setColor(Color.WHITE);
 		}
 		graphics.drawRect(x, y, width, height);
 		graphics.drawString(section_name, x + 3, y + string_height);
@@ -196,9 +216,12 @@ public class JPage extends JPanel {
 		return offset;
 	}
 
-	private int drawSectionStart(Graphics graphics, System system,
-			Barline barline, String name, int offset) {
-		String section_name = name + " (";
+	private int drawSectionEnd(Graphics graphics, System system,
+			Barline barline, Section section, int offset) {
+		String section_name = ")";
+		if (section.isRepeat()) {
+			section_name = ":|";
+		}
 		int string_width = FONT_METRICS.stringWidth(section_name);
 		int string_height = FONT_METRICS.getHeight();
 		int width = string_width + 6;
@@ -212,16 +235,19 @@ public class JPage extends JPanel {
 		graphics.fillRect(x, y, width, height);
 
 		graphics.setColor(Color.BLACK);
+		if (section.getState() == Section.ACTIVE) {
+			graphics.setColor(Color.WHITE);
+		}
 		graphics.drawRect(x, y, width, height);
 		graphics.drawString(section_name, x + 3, y + string_height);
 
 		return offset;
 	}
 
-	private int drawSectionEnd(Graphics graphics, System system,
-			Barline barline, int offset) {
-		String section_name = ")";
-		int string_width = FONT_METRICS.stringWidth(section_name);
+	private int drawRepeatStart(Graphics graphics, System system,
+			Barline barline, RepeatStartEvent repeat_start, int offset) {
+		String text = "|:";
+		int string_width = FONT_METRICS.stringWidth(text);
 		int string_height = FONT_METRICS.getHeight();
 		int width = string_width + 6;
 		int height = string_height + 6;
@@ -230,12 +256,40 @@ public class JPage extends JPanel {
 		int y = system.getTop() - height - 5;
 		offset += width + 5;
 
-		graphics.setColor(COLOR_SECTION);
+		graphics.setColor(COLOR_REPEAT);
 		graphics.fillRect(x, y, width, height);
 
 		graphics.setColor(Color.BLACK);
+		if (repeat_start.getState() == Section.ACTIVE) {
+			graphics.setColor(Color.WHITE);
+		}
 		graphics.drawRect(x, y, width, height);
-		graphics.drawString(section_name, x + 3, y + string_height);
+		graphics.drawString(text, x + 3, y + string_height);
+
+		return offset;
+	}
+
+	private int drawRepeatEnd(Graphics graphics, System system,
+			Barline barline, RepeatEndEvent repeat_end, int offset) {
+		String text = ":|";
+		int string_width = FONT_METRICS.stringWidth(text);
+		int string_height = FONT_METRICS.getHeight();
+		int width = string_width + 6;
+		int height = string_height + 6;
+
+		int x = barline.getOffset() + offset + 5;
+		int y = system.getTop() - height - 5;
+		offset += width + 5;
+
+		graphics.setColor(COLOR_REPEAT);
+		graphics.fillRect(x, y, width, height);
+
+		graphics.setColor(Color.BLACK);
+		if (repeat_end.getState() == Section.ACTIVE) {
+			graphics.setColor(Color.WHITE);
+		}
+		graphics.drawRect(x, y, width, height);
+		graphics.drawString(text, x + 3, y + string_height);
 
 		return offset;
 	}

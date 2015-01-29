@@ -31,17 +31,32 @@ public class Arrangement {
 		_list = new ArrayList<Section>();
 		_order = new ArrayList<Integer>();
 
+		List<Section> sections = _score.getSections();
+
 		for (String section_name : section_names) {
 			Section section = null;
-			for (Section s : _score.getSections()) {
+			List<Section> repeats = new ArrayList<Section>();
+			for (int i = 0; i < sections.size(); i++) {
+				Section s = sections.get(i);
 				if (s.getName().equals(section_name)) {
 					section = s;
+					for (int j = i; j < sections.size(); j++) {
+						if (section.isRepeat()) {
+							repeats.add(section);
+						} else {
+							break;
+						}
+					}
 					break;
 				}
 			}
 			if (section != null) {
 				_list.add(section);
 				_order.add(_score.getSections().indexOf(section));
+				for (Section repeat : repeats) {
+					_list.add(repeat);
+					_order.add(sections.indexOf(repeat));
+				}
 			} else {
 				java.lang.System.out.println("Could not find section: "
 						+ section_name);

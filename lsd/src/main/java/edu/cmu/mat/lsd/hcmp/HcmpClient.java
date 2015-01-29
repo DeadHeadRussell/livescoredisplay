@@ -239,13 +239,53 @@ public class HcmpClient implements HcmpMessenger {
 		List<Barline> start_barlines = score.getStartBarlines();
 		List<Barline> end_barlines = score.getEndBarlines();
 
+		int offset = 0;
+		String previousName = "";
+
+		int next_start = -1;
+		int next_duration = -1;
+
 		for (Section section : arrangement) {
 			int start_beat = start_barlines.indexOf(section.getStart()) * 4;
 			int end_beat = end_barlines.indexOf(section.getEnd()) * 4;
 			int duration = end_beat - start_beat;
-			message_parts.add("(" + section.getName() + "," + start_beat + ","
-					+ duration + ")");
+
+			String name = section.getName();
+			if (section.isRepeat()) {
+				int new_duration = start_beat - next_start;
+
+				if (next_duration > 0) {
+					message_parts.add("(" + previousName + ","
+							+ (next_start + offset) + "," + new_duration + ")");
+				}
+
+				message_parts.add("(" + previousName + ","
+						+ (start_beat + offset) + "," + duration + ")");
+				offset += duration;
+				if (end_beat < (next_start + next_duration)) {
+					message_parts.add("(" + previousName + ","
+							+ (start_beat + offset) + "," + duration + ")");
+					next_start = end_beat;
+					next_duration = next_duration - duration - new_duration;
+				} else {
+					next_start = start_beat;
+					next_duration = duration;
+				}
+			} else {
+				if (next_duration > 0) {
+					message_parts
+							.add("(" + previousName + ","
+									+ (next_start + offset) + ","
+									+ next_duration + ")");
+				}
+				previousName = name;
+				next_start = start_beat;
+				next_duration = duration;
+			}
 		}
+		message_parts.add("(" + previousName + "," + (next_start + offset)
+				+ "," + next_duration + ")");
+
 		sendMessage("hcmp arrangement " + Joiner.on(',').join(message_parts));
 	}
 

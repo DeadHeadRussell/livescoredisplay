@@ -2,12 +2,22 @@ package edu.cmu.mat.scores.events;
 
 import java.awt.Point;
 
+import edu.cmu.mat.scores.Barline;
 import edu.cmu.mat.scores.ScoreObject;
+import edu.cmu.mat.scores.Section;
 
-public class StartRepeatEvent extends Event {
+public class RepeatEndEvent extends Event {
+	private Barline _parent;
+	private Section _section;
+	private RepeatStartEvent _start;
+
+	public RepeatEndEvent(RepeatStartEvent start) {
+		_start = start;
+	}
+
 	@Override
 	public Type getType() {
-		return Event.Type.START_REPEAT;
+		return Event.Type.REPEAT_END;
 	}
 
 	public void move(Point distance, ScoreObject intersect) {
@@ -41,6 +51,16 @@ public class StartRepeatEvent extends Event {
 	}
 
 	public void delete() {
+		// TODO Auto-generated method stub
 
 	}
+
+	public int getState() {
+		return 0;
+	}
+
+	public RepeatStartEvent getStart() {
+		return _start;
+	}
+
 }

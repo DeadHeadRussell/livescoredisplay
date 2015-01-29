@@ -97,6 +97,14 @@ public class NotationToolbar implements Toolbar, ControllerListener {
 			}
 		}));
 
+		newPopupMenu.add(new JMenuItem(new AbstractAction("Repeat") {
+			private static final long serialVersionUID = 1L;
+
+			public void actionPerformed(ActionEvent arg0) {
+				_model.setCurrentTool(_model.NEW_REPEAT_TOOL);
+			}
+		}));
+
 		newButton.addMouseListener(new MouseAdapter() {
 			public void mousePressed(MouseEvent event) {
 				newPopupMenu.show(event.getComponent(), event.getX(),

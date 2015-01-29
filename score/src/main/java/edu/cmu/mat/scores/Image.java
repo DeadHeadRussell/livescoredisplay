@@ -13,8 +13,9 @@ public class Image {
 
 	public Image(BufferedImage image) {
 		_originalImage = image;
-		_resizedImage = image.getScaledInstance(image.getWidth(),
-				image.getHeight(), BufferedImage.SCALE_SMOOTH);
+		_resizedImage = _originalImage;
+		// _resizedImage = image.getScaledInstance(image.getWidth(),
+		// image.getHeight(), BufferedImage.SCALE_SMOOTH);
 
 	}
 

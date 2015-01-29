@@ -4,16 +4,10 @@ import java.awt.Point;
 
 import edu.cmu.mat.scores.ScoreObject;
 
-public class EndRepeatEvent extends Event {
-	private StartRepeatEvent _start;
-
-	public EndRepeatEvent(StartRepeatEvent start) {
-		_start = start;
-	}
-
+public class RepeatStartEvent extends Event {
 	@Override
 	public Type getType() {
-		return Event.Type.END_REPEAT;
+		return Event.Type.REPEAT_START;
 	}
 
 	public void move(Point distance, ScoreObject intersect) {
@@ -47,8 +41,10 @@ public class EndRepeatEvent extends Event {
 	}
 
 	public void delete() {
-		// TODO Auto-generated method stub
 
 	}
 
+	public int getState() {
+		return 0;
+	}
 }

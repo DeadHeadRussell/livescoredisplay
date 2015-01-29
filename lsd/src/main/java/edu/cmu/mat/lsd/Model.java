@@ -21,6 +21,7 @@ import edu.cmu.mat.lsd.menus.listeners.DisplayMenuListener;
 import edu.cmu.mat.lsd.tools.DeleteTool;
 import edu.cmu.mat.lsd.tools.MoveTool;
 import edu.cmu.mat.lsd.tools.NewBarlineTool;
+import edu.cmu.mat.lsd.tools.NewRepeatTool;
 import edu.cmu.mat.lsd.tools.NewSectionTool;
 import edu.cmu.mat.lsd.tools.NewSystemTool;
 import edu.cmu.mat.lsd.tools.Tool;
@@ -64,6 +65,7 @@ public class Model implements DisplayMenuListener {
 	public final Tool NEW_SYSTEM_TOOL = new NewSystemTool();
 	public final Tool NEW_BARLINE_TOOL = new NewBarlineTool();
 	public final Tool NEW_SECTION_TOOL = new NewSectionTool(this);
+	public final Tool NEW_REPEAT_TOOL = new NewRepeatTool(this);
 	public final Tool MOVE_TOOL = new MoveTool();
 	public final Tool DELETE_TOOL = new DeleteTool();
 
@@ -293,6 +295,13 @@ public class Model implements DisplayMenuListener {
 	public void addSection(String name, Barline start_barline,
 			Barline end_barline) {
 		getCurrentScore().addSection(start_barline, end_barline).setName(name);
+		_controller.modelUpdated();
+	}
+
+	public void addSection(Barline start_barline, Barline end_barline,
+			boolean repeat) {
+		getCurrentScore().addSection(start_barline, end_barline)
+				.setRepeat(true);
 		_controller.modelUpdated();
 	}
 

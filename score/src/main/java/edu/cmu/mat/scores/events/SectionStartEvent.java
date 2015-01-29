@@ -9,10 +9,15 @@ import edu.cmu.mat.scores.Section;
 public class SectionStartEvent extends Event {
 	private Barline _parent;
 	private Section _section;
+	private boolean _is_repeat;
 
 	public SectionStartEvent(Barline parent, Section section) {
 		_parent = parent;
 		_section = section;
+	}
+
+	public void setRepeat(boolean repeat) {
+		_is_repeat = repeat;
 	}
 
 	@Override
@@ -62,5 +67,9 @@ public class SectionStartEvent extends Event {
 	@Override
 	public void delete() {
 		_section.delete();
+	}
+
+	public boolean isRepeat() {
+		return _is_repeat;
 	}
 }

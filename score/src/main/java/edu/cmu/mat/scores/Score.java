@@ -20,7 +20,9 @@ import com.google.gson.annotations.Expose;
 import edu.cmu.mat.parsers.JsonParser;
 import edu.cmu.mat.parsers.exceptions.CompilerException;
 import edu.cmu.mat.scores.events.Event;
+import edu.cmu.mat.scores.events.Event.Type;
 import edu.cmu.mat.scores.events.EventTypeAdapter;
+import edu.cmu.mat.scores.events.RepeatEndEvent;
 import edu.cmu.mat.scores.events.SectionEndEvent;
 import edu.cmu.mat.scores.events.SectionStartEvent;
 
@@ -334,23 +336,21 @@ public class Score implements ScoreObject {
 				int start = Integer.parseInt(parts[1]) / 4;
 				int end = Integer.parseInt(parts[2]) / 4 + start;
 
-				if (!section_map.containsKey(name)) {
-					Barline start_barline = start_barlines.get(start);
-					Barline end_barline = end_barlines.get(end);
-					Section section = new Section(start_barline, end_barline);
-					section.setName(name);
+				Barline start_barline = start_barlines.get(start);
+				Barline end_barline = end_barlines.get(end);
+				Section section = new Section(start_barline, end_barline);
+				section.setName(name);
 
-					List<PlaybackEvent> section_events = new ArrayList<PlaybackEvent>();
-					int duration = 4;
-					boolean is_first = true;
-					for (int i = start; i < end; i++) {
-						section_events.add(new PlaybackEvent(section,
-								start_barlines.get(i), end_barlines.get(i + 1),
-								duration, is_first));
-						is_first = false;
-					}
-					section_map.put(name, section_events);
+				List<PlaybackEvent> section_events = new ArrayList<PlaybackEvent>();
+				int duration = 4;
+				boolean is_first = true;
+				for (int i = start; i < end; i++) {
+					section_events.add(new PlaybackEvent(section,
+							start_barlines.get(i), end_barlines.get(i + 1),
+							duration, is_first));
+					is_first = false;
 				}
+
 				events.addAll(section_map.get(name));
 			}
 
