@@ -80,8 +80,8 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	public void onUpdateView() {
 		if (_model.getCurrentView() == Model.VIEW_DISPLAY) {
-			arran(new String[] { "A,0,20", "A,0,20", "B,20,32", "C,52,16" });
 			/*
+			 * arran(new String[] { "A,0,20", "A,0,20", "B,20,32", "C,52,16" });
 			 * handleNewPosition(0); handleNewTime(TimeMap.Create(new
 			 * Date().getTime(), 0, 0.0072)); handlePlay();
 			 */
@@ -134,7 +134,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	@Override
 	public Boolean handleNewArrangement(String[] arrangement_string) {
-		return true;
+		return arran(new String[] { "A,0,20", "A,0,20", "B,20,32", "C,52,16" });
 	}
 
 	private Boolean arran(String[] arrangement_string) {
