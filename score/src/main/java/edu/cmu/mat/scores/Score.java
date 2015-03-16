@@ -6,11 +6,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-
 import javax.imageio.ImageIO;
 
 import com.google.gson.Gson;
@@ -339,7 +336,6 @@ public class Score implements ScoreObject {
 		try {
 			List<PlaybackEvent> events = new LinkedList<PlaybackEvent>();
 
-			Map<String, List<PlaybackEvent>> section_map = new HashMap<String, List<PlaybackEvent>>();
 			List<Barline> start_barlines = getStartBarlines();
 			List<Barline> end_barlines = getEndBarlines();
 
@@ -373,5 +369,140 @@ public class Score implements ScoreObject {
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	private System getNextSystemInScore(System current) {
+		Page current_page = current.getParent();
+		List<System> systems = current_page.getSystems();
+		if (systems.indexOf(current) < systems.size()-1) {
+			return systems.get(systems.indexOf(current)+1);
+		}
+		if (_pages.indexOf(current_page) < _pages.size()-1) {
+			return _pages.get(_pages.indexOf(current_page)+1).getSystems().get(0);
+		}	
+		return null;
+	}
+	
+	private Block createCurrentBlock(List<Block> blocks, System first) {
+		int block_height = 350;
+		
+		List<System> systems = new ArrayList<System>();
+		System previous = null;
+		System current = first;
+		int current_height = first.getBottom() - first.getTop();
+		
+		while (current != null && current_height <= block_height) {
+			
+			previous = current;
+			current = getNextSystemInScore(current);
+			
+			
+			if (current != null) {
+				if (current.getParent() == previous.getParent()) {
+					current_height += current.getBottom() - previous.getBottom();
+				}
+				else {
+					current_height += current.getBottom() - current.getTop();
+				}
+			}
+
+			systems.add(previous);
+			
+		}
+		java.lang.System.out.format("block height is %d, not %d\n", previous.getBottom()-first.getTop(),current_height);
+		return new Block(systems);
+
+	}
+	
+	
+	public boolean outOfBlock(Block block, PlaybackEvent event) {
+		Barline start = event.getStart();
+		System block_start = block.getStartSystem();
+		System block_end = block.getEndSystem();
+		
+		if (compareLocation(start.getParent(), block_start) < 0 || 
+			compareLocation(start.getParent(), block_end) > 0) {
+			return true;
+		}
+		return false;
+	}
+	/*
+	private boolean endOutOfBlock(Block block, PlaybackEvent event) {
+		Barline end = event.getStart();
+		System block_start = block.getStartSystem();
+		System block_end = block.getEndSystem();
+		
+		if (compareLocation(end.getParent(), block_start) < 0 ||
+			compareLocation(end.getParent(), block_end) > 0) {
+			return true;
+		}
+		return false;
+	}*/
+	
+	private PlaybackEvent propagateEvent(Block block, 
+			List<PlaybackEvent> events, PlaybackEvent event) {
+		int index = events.indexOf(event);
+		int size = events.size();
+		
+		PlaybackEvent next = event;
+		while (index < size-1 && !outOfBlock(block, next)) {
+			
+			next = events.get(index+1);
+			index++;
+		}
+		// if the last event is still inside current block,
+		// this is the last block, and nothing to propagate.
+		if (index == size-1 && !outOfBlock(block, next)) {
+			return null;
+		}
+		return next;
+		
+	}
+	
+	public List<Block> createBlockList(List<PlaybackEvent> events) {
+		List<Block> blocks = new ArrayList<Block>();
+		int event_start_index = 0;
+		PlaybackEvent current_event = events.get(event_start_index);
+		System next_block_start = current_event.getStart().getParent();
+		while (next_block_start != null) {
+			Block block = createCurrentBlock(blocks, next_block_start);
+			blocks.add(block);
+			
+			// propagate event forward until out of block;
+			current_event = propagateEvent(block, events, current_event);		
+			
+			if (current_event == null) {
+				next_block_start = null;
+			}
+			else {
+				// Count duration of the block and set start & end event index
+				int duration = 0;
+				block.setStartEventIndex(event_start_index);
+				for (; event_start_index < events.indexOf(current_event); event_start_index++){
+					duration += events.get(event_start_index).getDuration();
+				}
+				block.setEndEventIndex(event_start_index - 1);
+				block.setDuration(duration);
+				
+				
+				System event_start = current_event.getStart().getParent();
+				//System event_end = current_event.getEnd().getParent();
+
+				next_block_start = event_start;
+				/* next current event is completely before current block
+				if (compareLocation(event_end, block.getStartSystem()) < 0) {
+					next_block_start = event_start;
+				}// next current event is completely after current block
+				else if (compareLocation(event_start, block.getEndSystem()) > 0) {
+					next_block_start = event_start;
+				}
+				else {// other cases: next block starts in next system in score 
+					next_block_start = getNextSystemInScore(block.getEndSystem());
+				}*/
+			}
+			
+		}
+		
+		return blocks;
 	}
 }

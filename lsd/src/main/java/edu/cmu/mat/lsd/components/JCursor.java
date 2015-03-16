@@ -30,7 +30,7 @@ public class JCursor extends JPanel {
 
 	@Override
 	public void paint(Graphics graphics) {
-		graphics.setColor(Color.RED);
+		graphics.setColor(Color.BLUE);
 		graphics.fillOval(_x, _y, 5, 5);
 		graphics.setColor(Color.BLACK);
 		graphics.drawOval(_x, _y, 5, 5);

@@ -67,6 +67,14 @@ public class Page implements ScoreObject {
 		return _systems;
 	}
 
+	public System getFirstSystem() {
+		return _systems.get(0);
+	}
+	
+	public System getLastSystem() {
+		return _systems.get(_systems.size() - 1);
+	}
+
 	public Score getParent() {
 		return _parent;
 	}
