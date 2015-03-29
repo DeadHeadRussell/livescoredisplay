@@ -1,5 +1,6 @@
 package edu.cmu.mat.scores;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -7,10 +8,13 @@ public class Block {
 	private List<System> _systems;
 	private System _start_system = null;
 	private System _end_system = null;
-	private int _start_event_i;
-	private int _end_event_i;
 	
-	private int _duration;
+	private List<Barline> _jumps = new ArrayList<Barline>();
+	private int _jump_index = 0;
+	//private int _start_event_i;
+	//private int _end_event_i;
+	
+	//private int _duration;
 	
 	private boolean _has_flipped_next_block = false;
 	
@@ -25,6 +29,34 @@ public class Block {
 		_image = makeImage();
 	}
 	
+	public void addJump(Barline from, Barline to) {
+		_jumps.add(from);
+		_jumps.add(to);
+	}
+	
+	public Barline getNextJumpFrom() {
+		if (_jump_index < _jumps.size()) {
+			return _jumps.get(_jump_index);
+		}
+		else return null;
+	}
+	
+	public Barline getNextJumpTo() {
+		if (_jump_index < _jumps.size()) {
+			return _jumps.get(_jump_index+1);
+		}
+		else return null;
+	}
+	
+	public void makeJump(Barline from, Barline to) {
+		if (from != _jumps.get(_jump_index) || to != _jumps.get(_jump_index + 1)) {
+			java.lang.System.err.print("Err! Wrong jump\n");
+		}
+		else {
+			_jump_index += 2;
+		}
+	}
+	/*
 	public void setDuration(int duration) {
 		_duration = duration;
 	}
@@ -48,6 +80,7 @@ public class Block {
 	public int getEndEventIndex() {
 		return _end_event_i;
 	}
+	*/
 	
 	public void flippedNextBlock() {
 		_has_flipped_next_block = true;

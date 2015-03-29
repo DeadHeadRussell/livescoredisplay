@@ -25,9 +25,11 @@ import edu.cmu.mat.scores.Barline;
 import edu.cmu.mat.scores.Block;
 import edu.cmu.mat.scores.PlaybackEvent;
 import edu.cmu.mat.scores.Score;
+import edu.cmu.mat.scores.System;
 
 public class DisplayPanel implements Panel, HcmpListener {
 	private Model _model;
+	private Score _score;
 
 	private JScrollPane _scroller;
 	private JPanel _panel = new JPanel();
@@ -38,6 +40,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 	private JBlock _lower_block = new JBlock();
 	private JCursor _cursor;
 	private JArrow _arrow;
+	private boolean _is_arrow_visible = false;
 
 	//List<JSection> _jsections;
 	List<Block> _blocks;
@@ -54,6 +57,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 	public DisplayPanel(Model model) {
 		_model = model;
 		_model.getHcmp().setListener(this);
+		_score = _model.getCurrentScore();
 
 		_panel.setLayout(new BoxLayout(_panel, BoxLayout.Y_AXIS));
 		_layers.add(_panel, -1);
@@ -61,6 +65,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 		_arrow = new JArrow(_panel);
 		_arrow.setOpaque(false);
+		_arrow.setVisible(_is_arrow_visible);
 		//_arrow.setSize(_layers.getPreferredSize());
 		_layers.add(_arrow, 0);
 		
@@ -94,10 +99,10 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	public void onUpdateView() {
 		if (_model.getCurrentView() == Model.VIEW_DISPLAY) {
-			
+			 
 			 handleNewArrangement(new String[] { "A,0,20","A,0,20","B,20,32","C,52,16","D,68,8","D,68,8","F,76,16"});
 			 handleNewPosition(0); handleNewTime(TimeMap.Create(new
-			 Date().getTime(), 0, 0.0072)); handlePlay();
+			 Date().getTime(), 0, 0.003)); handlePlay();
 			 
 			_scroller.revalidate();
 			_scroller.repaint();
@@ -159,6 +164,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 		_playback_events = new_events;
 		_blocks = _model.getCurrentScore().createBlockList(_playback_events);
 		_current_block_index = 0;
+		_is_arrow_visible = false;
 		
 		_panel.removeAll();
 
@@ -239,7 +245,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 		long time = new Date().getTime();
 		for (;; _events_index++) {
 			delay = (long) (_time_map.from(_events_index * 4) - time);
-			if (delay > 0) {
+			if (delay >= 0) {
 				break;
 			}
 		}
@@ -249,6 +255,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				updateBlock();
+				drawArrow();
 				moveCursor();
 				if (_events_index <= _playback_events.size()) {
 					fireNextEvent(id);
@@ -296,15 +303,69 @@ public class DisplayPanel implements Panel, HcmpListener {
 		}
 		
 		if (_current_block_index < _blocks.size() - 1) {
-			Score score = _model.getCurrentScore();
-			if (score.outOfBlock(current_block, _playback_events.get(_events_index))) {
+			if (_score.outOfBlock(current_block, _playback_events.get(_events_index).getStart())) {
 				_current_block_index += 1;
-				if (score.outOfBlock(_blocks.get(_current_block_index), _playback_events.get(_events_index))) {
-					java.lang.System.out.print("Error! Current event out of current and next block.\n");
+				if (_score.outOfBlock(_blocks.get(_current_block_index), _playback_events.get(_events_index).getStart())) {
+					java.lang.System.err.print("Error! Current event out of current and next block.\n");
 				}
 			}
 		}
 		redraw();
+	}
+	
+	private void drawArrow() {
+		if (_events_index < _playback_events.size()) {
+			PlaybackEvent current_event = _playback_events.get(_events_index);
+			System current_system = current_event.getStart().getParent();
+			Block current_block = _blocks.get(_current_block_index);
+			Barline next_jump_from = current_block.getNextJumpFrom();
+			Barline next_jump_to = current_block.getNextJumpTo();
+			
+			if (!_is_arrow_visible) {
+				if (next_jump_from != null && current_system == next_jump_from.getParent()) {
+					_is_arrow_visible = true;
+					
+					
+					int from_x = next_jump_from.getOffset();
+					int to_x = next_jump_to.getOffset();
+					int from_y = current_block.getYOffset(next_jump_from.getParent())
+							+ getJBlock(true).getY();
+					int to_y;
+					if (_score.outOfBlock(current_block, next_jump_to)) {
+						Block next_block = _blocks.get(_current_block_index + 1);
+						
+						to_y = next_block.getYOffset(next_jump_to.getParent())
+							+ getJBlock(false).getY();
+					}
+					else to_y = current_block.getYOffset(next_jump_to.getParent())
+							+ getJBlock(true).getY();
+						
+					_previous_jump_to = next_jump_to;
+					_arrow.setPosition(from_x, from_y, to_x, to_y);
+				}
+	
+				_arrow.setVisible(_is_arrow_visible);
+			}
+			
+			if (current_event.getEnd() == next_jump_from) {
+				current_block.makeJump(next_jump_from, next_jump_to);
+				_is_arrow_visible = false;
+			}
+			
+		}
+		
+	}
+	
+	// Get the current or the other JBlock using block index
+	private JBlock getJBlock(boolean isCurrent) {
+		if (_current_block_index % 2 == 0) {
+			if (isCurrent) return _upper_block;
+			else return _lower_block;
+		}
+		else {
+			if (isCurrent) return _lower_block;
+			else return _upper_block;
+		}
 	}
 	
 	private void moveCursor() {
@@ -322,13 +383,10 @@ public class DisplayPanel implements Panel, HcmpListener {
 			
 			Block end_block = _blocks.get(_current_block_index);
 			//int image_top = end_block.getStartSystem().getTop();
-			JBlock current_jblock;
-			if (_current_block_index % 2 == 0) current_jblock = _upper_block;
-			else current_jblock = _lower_block;
-
+			
 			int x = end_bar.getOffset();
 			int y = end_block.getYOffset(end_bar.getParent())
-					+ current_jblock.getY();
+					+ getJBlock(true).getY();
 
 			_cursor.setPosition(x, y);
 			
@@ -348,13 +406,10 @@ public class DisplayPanel implements Panel, HcmpListener {
 			
 			Block current_block = _blocks.get(_current_block_index);
 			//int image_top = current_block.getStartSystem().getTop();
-			JBlock current_jblock;
-			if (_current_block_index % 2 == 0) current_jblock = _upper_block;
-			else current_jblock = _lower_block;
 	
 			int x = current_bar.getOffset();
 			int y = current_block.getYOffset(current_bar.getParent())
-					+ current_jblock.getY();
+					+ getJBlock(true).getY();
 	
 			_cursor.setPosition(x, y);
 			

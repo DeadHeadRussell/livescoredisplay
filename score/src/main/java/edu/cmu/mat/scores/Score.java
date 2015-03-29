@@ -415,8 +415,7 @@ public class Score implements ScoreObject {
 	}
 	
 	
-	public boolean outOfBlock(Block block, PlaybackEvent event) {
-		Barline start = event.getStart();
+	public boolean outOfBlock(Block block, Barline start) {
 		System block_start = block.getStartSystem();
 		System block_end = block.getEndSystem();
 		
@@ -438,21 +437,46 @@ public class Score implements ScoreObject {
 		}
 		return false;
 	}*/
+	private boolean isJump(Barline curr, Barline next) {
+		if (curr != next) {
+			System curr_system = curr.getParent();
+			List<Barline> curr_barlines = curr_system.getBarlines();
+			System next_system = next.getParent();
+			List<Barline> next_barlines = next_system.getBarlines();
+			
+			if (next_system != getNextSystemInScore(curr_system) || 
+			    curr != curr_barlines.get(curr_barlines.size()-1) ||
+			    next != next_barlines.get(0)) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	private PlaybackEvent propagateEvent(Block block, 
 			List<PlaybackEvent> events, PlaybackEvent event) {
 		int index = events.indexOf(event);
 		int size = events.size();
 		
+		PlaybackEvent curr = event;
 		PlaybackEvent next = event;
-		while (index < size-1 && !outOfBlock(block, next)) {
+		while (index < size-1) {
 			
+			curr = next;
 			next = events.get(index+1);
 			index++;
+			
+			if (outOfBlock(block, next.getStart())) {
+				block.addJump(curr.getEnd(), next.getStart());
+				break;
+			}
+			else if (isJump(curr.getEnd(), next.getStart())) {
+				block.addJump(curr.getEnd(), next.getStart());
+			}
 		}
 		// if the last event is still inside current block,
 		// this is the last block, and nothing to propagate.
-		if (index == size-1 && !outOfBlock(block, next)) {
+		if (index == size-1 && !outOfBlock(block, next.getStart())) {
 			return null;
 		}
 		return next;
@@ -475,7 +499,7 @@ public class Score implements ScoreObject {
 				next_block_start = null;
 			}
 			else {
-				// Count duration of the block and set start & end event index
+				/* Count duration of the block and set start & end event index
 				int duration = 0;
 				block.setStartEventIndex(event_start_index);
 				for (; event_start_index < events.indexOf(current_event); event_start_index++){
@@ -483,22 +507,14 @@ public class Score implements ScoreObject {
 				}
 				block.setEndEventIndex(event_start_index - 1);
 				block.setDuration(duration);
+				*/
 				
 				
 				System event_start = current_event.getStart().getParent();
 				//System event_end = current_event.getEnd().getParent();
 
 				next_block_start = event_start;
-				/* next current event is completely before current block
-				if (compareLocation(event_end, block.getStartSystem()) < 0) {
-					next_block_start = event_start;
-				}// next current event is completely after current block
-				else if (compareLocation(event_start, block.getEndSystem()) > 0) {
-					next_block_start = event_start;
-				}
-				else {// other cases: next block starts in next system in score 
-					next_block_start = getNextSystemInScore(block.getEndSystem());
-				}*/
+				
 			}
 			
 		}
