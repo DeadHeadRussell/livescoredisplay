@@ -378,7 +378,9 @@ public class Score implements ScoreObject {
 			return systems.get(systems.indexOf(current)+1);
 		}
 		if (_pages.indexOf(current_page) < _pages.size()-1) {
-			return _pages.get(_pages.indexOf(current_page)+1).getSystems().get(0);
+			List<System> next_page_systems = _pages.get(_pages.indexOf(current_page)+1).getSystems();
+			if (next_page_systems.size() == 0) return null;
+			return next_page_systems.get(0);
 		}	
 		return null;
 	}

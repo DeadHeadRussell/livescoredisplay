@@ -258,7 +258,7 @@ public class Model implements DisplayMenuListener {
 	private void loadScores() throws IOException {
 		File[] scores = _library.listFiles(new FileFilter() {
 			public boolean accept(File file) {
-				return !file.getName().equals("init.json");
+				return !file.getName().equals("init.json") && !file.getName().equals(".DS_Store");
 			}
 		});
 

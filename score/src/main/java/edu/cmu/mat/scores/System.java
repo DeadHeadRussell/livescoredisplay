@@ -111,6 +111,11 @@ public class System implements ScoreObject {
 	public int getBottom() {
 		return _bottom;
 	}
+	
+	// Not the real height displayed
+	public int getInnerHeight() {
+		return _bottom - _top;
+	}
 
 	public int getState() {
 		return _state;

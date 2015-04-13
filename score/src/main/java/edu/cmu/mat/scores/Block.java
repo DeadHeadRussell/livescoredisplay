@@ -101,6 +101,7 @@ public class Block {
 		int offset = start_page.getLastSystem().getBottom() - _start_system.getTop();
 		List<Page> pages = start_page.getParent().getPages();
 		int current_page_index = pages.indexOf(current_page);
+		
 		for (int i = pages.indexOf(start_page)+1; i < current_page_index; i++) {
 			offset += pages.get(i).getLastSystem().getBottom() -
 					pages.get(i).getFirstSystem().getTop();

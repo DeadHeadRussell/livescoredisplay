@@ -43,7 +43,8 @@ public class DisplayPanel implements Panel, HcmpListener {
 	private boolean _is_arrow_visible = false;
 
 	//List<JSection> _jsections;
-	List<Block> _blocks;
+	private List<Block> _blocks;
+	private Barline _previous_jump_to = null;
 
 	private TimeMap _time_map;
 	private Timer _play_timer;
@@ -53,6 +54,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 	private int _events_index = 0;
 	//private int _current_jsection_index = -1;
 	private int _current_block_index = 0;
+	private static final int PAGE_LEFT = 8;
 
 	public DisplayPanel(Model model) {
 		_model = model;
@@ -66,14 +68,11 @@ public class DisplayPanel implements Panel, HcmpListener {
 		_arrow = new JArrow(_panel);
 		_arrow.setOpaque(false);
 		_arrow.setVisible(_is_arrow_visible);
-		//_arrow.setSize(_layers.getPreferredSize());
 		_layers.add(_arrow, 0);
 		
 		_cursor = new JCursor(_panel);
 		_cursor.setOpaque(false);
-		//_cursor.setSize(_layers.getPreferredSize());
 		_layers.add(_cursor, 0);
-
 
 		
 		_scroller = new JScrollPane(_centering);
@@ -99,10 +98,11 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	public void onUpdateView() {
 		if (_model.getCurrentView() == Model.VIEW_DISPLAY) {
-			 
-			 handleNewArrangement(new String[] { "A,0,20","A,0,20","B,20,32","C,52,16","D,68,8","D,68,8","F,76,16"});
+			 String[] s1 = new String[] {"A,0,36","A,0,36","B,36,48","B,36,48","A,0,36"};
+			 String[] s2 = new String[] { "A,0,20","A,0,20","B,20,32","C,52,16","D,68,8","D,68,8","F,76,16"};
+			 handleNewArrangement(s2);
 			 handleNewPosition(0); handleNewTime(TimeMap.Create(new
-			 Date().getTime(), 0, 0.003)); handlePlay();
+			 Date().getTime(), 0, 0.004)); handlePlay();
 			 
 			_scroller.revalidate();
 			_scroller.repaint();
@@ -171,34 +171,9 @@ public class DisplayPanel implements Panel, HcmpListener {
 		int width = 0;
 		int height = 0;
 		
-		/*_jsections = new ArrayList<JSection>();
-		//for (PlaybackEvent event : _playback_events) {
-			if (event.isSectionStart()) {
-				JSection jsection = new JSection(event.getSection());
-				_jsections.add(jsection);
-				//_panel.add(jsection);
-
-				//width = Math.max(width, jsection.getWidth());
-				//height += jsection.getHeight();
-			}
-		}*/
-		
-		//List<Page> pages = _model.getCurrentScore().getPages();
 		
 		for (Block block : _blocks) {
-			/*
-			Page start_page = block.getStartSystem().getParent();
-			Page end_page = block.getEndSystem().getParent();
-			java.lang.System.out.format("Block from page %d system %d to page %d system %d\n",
-					pages.indexOf(start_page), start_page.getSystems().indexOf(block.getStartSystem()),
-					pages.indexOf(end_page), end_page.getSystems().indexOf(block.getEndSystem()));
-			JBlock jblock = new JBlock();
-			jblock.setBlock(block);
-			_panel.add(jblock);
-			_panel.add(_margin);
-			*/
 			width = Math.max(width, block.getWidth());
-			//height += jblock.getHeight() + 10;
 		}
 		
 		_upper_block.setBlock(_blocks.get(0));
@@ -216,16 +191,13 @@ public class DisplayPanel implements Panel, HcmpListener {
 			height = _upper_block.getHeight();
 			_panel.add(_upper_block);
 		}
-		
-	
+
 		_layers.setPreferredSize(new Dimension(width, height));
 		_panel.setSize(_layers.getPreferredSize());
 
 		_cursor.setSize(_layers.getPreferredSize());
-		//_cursor.setLocation(0, 0);
 		
 		_arrow.setSize(_layers.getPreferredSize());
-		//_arrow.setPosition(50, 0, 0, 50);
 
 		redraw();
 
@@ -273,12 +245,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	private void setTime(int beat) {
 		int so_far = 0;
-		//_current_jsection_index = -2;
 		for (PlaybackEvent event : _playback_events) {
-			//if (event.isSectionStart()) {
-				//_current_jsection_index++;
-			//}
-
 			so_far += event.getDuration();
 			if (so_far > beat) {
 				_events_index = _playback_events.indexOf(event);
@@ -290,6 +257,15 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	private void updateBlock() {
 		Block current_block = _blocks.get(_current_block_index);
+		if (_current_block_index < _blocks.size() - 1) {
+			if (_score.outOfBlock(current_block, _playback_events.get(_events_index).getStart())) {
+				_current_block_index += 1;
+				if (_score.outOfBlock(_blocks.get(_current_block_index), _playback_events.get(_events_index).getStart())) {
+					java.lang.System.err.print("Error! Current event out of current and next block.\n");
+				}
+			}
+		}
+		current_block = _blocks.get(_current_block_index);
 		if (!current_block.hasFlippedNextBlock()) {
 			if (_current_block_index < _blocks.size() - 1) {
 				Block next_block = _blocks.get(_current_block_index + 1);
@@ -302,15 +278,21 @@ public class DisplayPanel implements Panel, HcmpListener {
 			else current_block.flippedNextBlock();
 		}
 		
-		if (_current_block_index < _blocks.size() - 1) {
-			if (_score.outOfBlock(current_block, _playback_events.get(_events_index).getStart())) {
-				_current_block_index += 1;
-				if (_score.outOfBlock(_blocks.get(_current_block_index), _playback_events.get(_events_index).getStart())) {
-					java.lang.System.err.print("Error! Current event out of current and next block.\n");
-				}
+		
+		redraw();
+	}
+	
+	private boolean isCloseTo(int d, int current_events_index, Barline to) {
+		int end = current_events_index + d;
+		if (end >= _playback_events.size()) {
+			end = _playback_events.size() - 1;
+		}
+		for (int i = current_events_index; i < end; i++) {
+			if (_playback_events.get(i).getEnd() == to) {
+				return true;
 			}
 		}
-		redraw();
+		return false;
 	}
 	
 	private void drawArrow() {
@@ -321,13 +303,22 @@ public class DisplayPanel implements Panel, HcmpListener {
 			Barline next_jump_from = current_block.getNextJumpFrom();
 			Barline next_jump_to = current_block.getNextJumpTo();
 			
+			if (_previous_jump_to != null && current_event.getStart() == _previous_jump_to) {
+				_is_arrow_visible = false;
+			}
+			
 			if (!_is_arrow_visible) {
-				if (next_jump_from != null && current_system == next_jump_from.getParent()) {
+				
+				//show arrow on the system
+				//if (next_jump_from != null && current_system == next_jump_from.getParent()) 
+				
+				//show arrow before 2 measures
+				if (next_jump_from != null && isCloseTo(2, _events_index, next_jump_from)) {
 					_is_arrow_visible = true;
 					
 					
-					int from_x = next_jump_from.getOffset();
-					int to_x = next_jump_to.getOffset();
+					int from_x = next_jump_from.getOffset() - PAGE_LEFT;
+					int to_x = next_jump_to.getOffset() - PAGE_LEFT;
 					int from_y = current_block.getYOffset(next_jump_from.getParent())
 							+ getJBlock(true).getY();
 					int to_y;
@@ -339,6 +330,14 @@ public class DisplayPanel implements Panel, HcmpListener {
 					}
 					else to_y = current_block.getYOffset(next_jump_to.getParent())
 							+ getJBlock(true).getY();
+					// Current y values are referring to bottom of system
+					
+					if (from_y < to_y) {
+						to_y -= next_jump_to.getParent().getInnerHeight();
+					}
+					else if (from_y > to_y) {
+						from_y -= current_system.getInnerHeight();
+					}
 						
 					_previous_jump_to = next_jump_to;
 					_arrow.setPosition(from_x, from_y, to_x, to_y);
@@ -349,7 +348,6 @@ public class DisplayPanel implements Panel, HcmpListener {
 			
 			if (current_event.getEnd() == next_jump_from) {
 				current_block.makeJump(next_jump_from, next_jump_to);
-				_is_arrow_visible = false;
 			}
 			
 		}
@@ -382,7 +380,6 @@ public class DisplayPanel implements Panel, HcmpListener {
 			Barline end_bar = end_event.getEnd();
 			
 			Block end_block = _blocks.get(_current_block_index);
-			//int image_top = end_block.getStartSystem().getTop();
 			
 			int x = end_bar.getOffset();
 			int y = end_block.getYOffset(end_bar.getParent())
@@ -393,19 +390,9 @@ public class DisplayPanel implements Panel, HcmpListener {
 		}
 		else {
 			PlaybackEvent current_event = _playback_events.get(_events_index);
-			//Section current_section = current_event.getSection();
 			Barline current_bar = current_event.getStart();
-	
-			//if (current_event.isSectionStart()) {
-			//	_current_jsection_index++;
-			//}
-	
-			//JSection current_jsection = _jsections.get(_current_jsection_index);
-			//System top_system = current_section.getStart().getParent();
-			//int image_top = top_system.getTop();
 			
 			Block current_block = _blocks.get(_current_block_index);
-			//int image_top = current_block.getStartSystem().getTop();
 	
 			int x = current_bar.getOffset();
 			int y = current_block.getYOffset(current_bar.getParent())
@@ -414,13 +401,6 @@ public class DisplayPanel implements Panel, HcmpListener {
 			_cursor.setPosition(x, y);
 			
 			
-			/*
-			JScrollBar scroll_bar = _scroller.getVerticalScrollBar();
-			if (y > (scroll_bar.getValue() + _scroller.getHeight()) - 100) {
-				int system_top = current_bar.getParent().getTop() - image_top
-						+ current_jsection.getY();
-				scroll_bar.setValue(Math.min(system_top, scroll_bar.getMaximum()));
-			}*/
 		}
 		redraw();
 	}
