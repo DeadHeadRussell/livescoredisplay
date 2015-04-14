@@ -46,6 +46,7 @@ public class XmlParser implements Parser {
 
 	public Score parse(String scoreName, File score, List<Image> images)
 			throws CompilerException, FileNotFoundException, IOException {
+		File rootFile = score.getParentFile();
 		Document xml = null;
 		try {
 			xml = readXmlFile(score);
@@ -103,7 +104,7 @@ public class XmlParser implements Parser {
 			}
 		}
 
-		return new Score(scoreName, null, null);
+		return new Score(rootFile, scoreName, null, null);
 	}
 
 	private Document readXmlFile(File file)

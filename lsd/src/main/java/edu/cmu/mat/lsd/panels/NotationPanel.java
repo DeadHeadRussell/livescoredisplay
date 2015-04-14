@@ -29,17 +29,18 @@ public class NotationPanel implements Panel {
 	}
 
 	public void onUpdateScore() {
-		_panel.removeAll();
-
 		Score score = _model.getCurrentScore();
 		if (score == null) {
 			return;
 		}
 
+		_panel.removeAll();
+
 		for (Page page : score.getPages()) {
 			_panel.add(new JPage(_model, page));
 		}
 
+		_scroller.revalidate();
 		_scroller.repaint();
 	}
 

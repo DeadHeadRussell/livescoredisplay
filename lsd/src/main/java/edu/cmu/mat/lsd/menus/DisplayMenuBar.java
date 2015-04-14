@@ -17,6 +17,7 @@ import javax.swing.JSeparator;
 
 import edu.cmu.mat.lsd.ControllerListener;
 import edu.cmu.mat.lsd.Model;
+import edu.cmu.mat.parsers.exceptions.CompilerException;
 import edu.cmu.mat.scores.Score;
 
 public class DisplayMenuBar extends JMenuBar implements ControllerListener {
@@ -32,22 +33,18 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 
 		add(createFileMenu());
 		add(createLibraryMenu());
-		add(createViewMenu());
+		add(createScoreMenu());
 		onUpdateView();
 		onUpdateLibraryPath();
 	}
 
 	private JMenu createFileMenu() {
 		JMenu file = new JMenu("File");
-		JMenu new_ = new JMenu("New");
-		JMenuItem new_score = new JMenuItem("Score...");
-		JMenuItem new_arrangement = new JMenuItem("Arrangment...");
+		JMenuItem new_score = new JMenuItem("New Score...");
 		JMenuItem save = new JMenuItem("Save");
 		JMenuItem quit = new JMenuItem("Quit");
 
-		new_.add(new_score);
-		new_.add(new_arrangement);
-		file.add(new_);
+		file.add(new_score);
 		file.add(new JSeparator());
 		file.add(save);
 		file.add(quit);
@@ -55,13 +52,24 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 		new_score.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
 				String name = JOptionPane.showInputDialog("Score Name");
-				_model.onNewScore(name);
-			}
-		});
+				if (name == null || name.length() == 0) {
+					return;
+				}
 
-		new_arrangement.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent event) {
-				_model.onNewArrangement();
+				JFileChooser chooser = new JFileChooser();
+				chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				chooser.setMultiSelectionEnabled(true);
+				chooser.showOpenDialog(null);
+				File[] images = chooser.getSelectedFiles();
+				if (images == null || images.length == 0) {
+					return;
+				}
+
+				try {
+					_model.onNewScore(name, images);
+				} catch (IOException | CompilerException exception) {
+					exception.printStackTrace();
+				}
 			}
 		});
 
@@ -108,14 +116,58 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 		return library;
 	}
 
-	private JMenu createViewMenu() {
-		JMenu view = new JMenu("View");
+	private JMenu createScoreMenu() {
+		JMenu score = new JMenu("Score");
+
+		JMenuItem rename = new JMenuItem("Rename...");
+		JMenuItem add_images = new JMenuItem("Add Pages...");
 
 		ButtonGroup group = new ButtonGroup();
 		_notation = new JRadioButtonMenuItem("Notation");
 		_display = new JRadioButtonMenuItem("Display");
 		group.add(_notation);
 		group.add(_display);
+
+		score.add(rename);
+		score.add(add_images);
+		score.add(new JSeparator());
+		score.add(_notation);
+		score.add(_display);
+
+		rename.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String name = JOptionPane.showInputDialog("Score Name");
+				if (name == null || name.length() == 0) {
+					return;
+				}
+				try {
+					_model.renameCurrentScore(name);
+				} catch (IOException exception) {
+					// TODO Auto-generated catch block
+					exception.printStackTrace();
+				}
+			}
+		});
+
+		add_images.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser chooser = new JFileChooser();
+				chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				chooser.setMultiSelectionEnabled(true);
+				chooser.showOpenDialog(null);
+				File[] images = chooser.getSelectedFiles();
+				if (images == null || images.length == 0) {
+					return;
+				}
+
+				try {
+					_model.addPages(images);
+				} catch (IOException exception) {
+					// TODO Auto-generated catch block
+					exception.printStackTrace();
+				}
+			}
+		});
 
 		_notation.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -129,10 +181,7 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 			}
 		});
 
-		view.add(_notation);
-		view.add(_display);
-
-		return view;
+		return score;
 	}
 
 	public void onUpdateLibraryPath() {

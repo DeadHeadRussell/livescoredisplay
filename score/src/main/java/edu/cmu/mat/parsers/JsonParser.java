@@ -13,6 +13,7 @@ import edu.cmu.mat.scores.Score;
 public class JsonParser implements Parser {
 	public Score parse(String name, File score_file, List<Image> images)
 			throws CompilerException {
+		File root = score_file.getParentFile();
 		if (score_file.exists()) {
 			Score json = Score.GSON.fromJson(GET_TEXT(score_file), Score.class);
 
@@ -22,11 +23,11 @@ public class JsonParser implements Parser {
 				// XXX: Show dialog box asking user to either quit and deal with
 				// images, or create a new score.
 			} else {
-				return new Score(json, images);
+				return new Score(root, json, images);
 			}
 		}
 
-		return new Score(name, images);
+		return new Score(root, name, images);
 	}
 
 	private static String GET_TEXT(File score_file) {

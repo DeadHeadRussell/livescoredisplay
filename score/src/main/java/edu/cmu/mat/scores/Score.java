@@ -4,6 +4,7 @@ import java.awt.Point;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -32,6 +33,8 @@ public class Score implements ScoreObject {
 	// GSON, since three locations, this score, bar events, and arrangements,
 	// access them. We do not want imports to duplicate them.
 
+	private File _root;
+
 	@Expose
 	private String _name;
 	@Expose
@@ -42,25 +45,27 @@ public class Score implements ScoreObject {
 	@Expose
 	private Arrangement _arrangement = new Arrangement(this);
 
-	public Score(String name, List<Section> sections, List<Page> pages) {
+	public Score(File root, String name, List<Section> sections,
+			List<Page> pages) {
+		_root = root;
 		_name = name;
 		_sections = sections;
 		_pages = pages;
 	}
 
-	public Score(String name) {
-		this(name, new LinkedList<Section>(), new ArrayList<Page>());
+	public Score(File root, String name) {
+		this(root, name, new LinkedList<Section>(), new ArrayList<Page>());
 	}
 
-	public Score(String name, List<Image> images) {
-		this(name);
+	public Score(File root, String name, List<Image> images) {
+		this(root, name);
 		for (Image image : images) {
 			addPage(new Page(this, image));
 		}
 	}
 
-	public Score(Score other, List<Image> images) {
-		this(other.getName());
+	public Score(File root, Score other, List<Image> images) {
+		this(root, other.getName());
 		for (int i = 0; i < other.getNumberPages(); i++) {
 			addPage(new Page(this, other.getPage(i), images.get(i)));
 		}
@@ -77,6 +82,14 @@ public class Score implements ScoreObject {
 		// Initializing arrangements has to come after initializing the pages
 		// and sections since arrangements relies on them to already exist.
 		_arrangement = new Arrangement(this, other._arrangement);
+	}
+
+	public void setRoot(File root) {
+		_root = root;
+	}
+
+	public void setName(String name) {
+		_name = name;
 	}
 
 	public String getName() {
@@ -183,6 +196,19 @@ public class Score implements ScoreObject {
 		_pages.add(page);
 	}
 
+	public void addPages(File[] images) throws IOException {
+		File imagesDir = new File(_root, "images");
+		int num = _pages.size();
+
+		for (int i = 0; i < images.length; i++) {
+			String fromString = images[i].toString();
+			String ext = fromString.substring(fromString.lastIndexOf('.'));
+			File to = new File(imagesDir, String.valueOf(num + i + 1) + ext);
+			Files.copy(images[i].toPath(), to.toPath());
+			addPage(new Page(this, new Image(ImageIO.read(to))));
+		}
+	}
+
 	public int getNumberPages() {
 		return _pages.size();
 	}
@@ -196,7 +222,6 @@ public class Score implements ScoreObject {
 	}
 
 	public void saveTo(File score_directory) {
-		// XXX: Save images if any new were added.
 		String json = GSON.toJson(this);
 		File init_file = new File(score_directory, "init.json");
 		try {
@@ -241,6 +266,22 @@ public class Score implements ScoreObject {
 
 		File init_file = new File(score_directory, "init.json");
 		return PARSER.parse(score_directory.getName(), init_file, images);
+	}
+
+	public static Score createNew(File score_path, File[] images)
+			throws IOException, CompilerException {
+		score_path.mkdir();
+		File images_path = new File(score_path, "images");
+		images_path.mkdir();
+
+		for (int i = 0; i < images.length; i++) {
+			String fromString = images[i].toString();
+			String ext = fromString.substring(fromString.lastIndexOf('.'));
+			File image_path = new File(images_path, String.valueOf(i + 1) + ext);
+			Files.copy(images[i].toPath(), image_path.toPath());
+		}
+
+		return fromDirectory(score_path);
 	}
 
 	public ScoreObject getParent() {

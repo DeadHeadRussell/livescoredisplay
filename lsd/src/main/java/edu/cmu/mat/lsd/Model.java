@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
@@ -42,9 +43,9 @@ public class Model implements DisplayMenuListener {
 	@Expose
 	private int _windowY = 0;
 	@Expose
-	private int _windowWidth = 0;
+	private int _windowWidth = 800;
 	@Expose
-	private int _windowHeight = 0;
+	private int _windowHeight = 600;
 
 	private List<Score> _scores = new ArrayList<Score>();
 	private int _currentScore = -1;
@@ -75,14 +76,19 @@ public class Model implements DisplayMenuListener {
 	public Model(Controller controller) {
 		_controller = controller;
 		_gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation()
-				.create();
+				.setPrettyPrinting().create();
 
 		_hcmp.start(IP_ADDRESS, PORT_PULL, PORT_PUBLISH);
 
 		Preferences prefs = Preferences.userRoot();
-		File path = new File(prefs.node("edu.cmu.mat.lsd").get("library", ""));
+		String path = prefs.node("edu.cmu.mat.lsd").get("library", "");
+		File library_file = new File(path);
+		if (path.length() == 0) {
+			library_file = new File(System.getProperty("user.home"), "library");
+		}
+
 		try {
-			onSetPath(path);
+			onSetPath(library_file);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -163,6 +169,15 @@ public class Model implements DisplayMenuListener {
 		_controller.scoreUpdated();
 	}
 
+	public boolean scoreExists(String score_name) {
+		for (Score score : _scores) {
+			if (score_name.equals(score.getName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public void setCurrentView(int view) {
 		_currentView = view;
 		_controller.viewUpdated();
@@ -173,13 +188,17 @@ public class Model implements DisplayMenuListener {
 		_controller.toolUpdated();
 	}
 
-	public void onNewScore(String score_name) {
-		// TODO Auto-generated method stub
+	public void onNewScore(String score_name, File[] images)
+			throws IOException, CompilerException {
+		if (!scoreExists(score_name)) {
+			File score_path = new File(_library, score_name);
+			_scores.add(Score.createNew(score_path, images));
+			_controller.libraryPathUpdated();
+		}
 
-	}
-
-	public void onNewArrangement() {
-		// TODO Auto-generated method stub
+		setCurrentScore(score_name);
+		setCurrentView(VIEW_NOTATION);
+		setCurrentTool(null);
 	}
 
 	public void onSetPath(File path) throws IOException {
@@ -215,6 +234,14 @@ public class Model implements DisplayMenuListener {
 			return;
 		}
 
+		try {
+			_library.mkdirs();
+		} catch (SecurityException e) {
+			// TODO: Inform user properly that they cannot use that library
+			// path.
+			e.printStackTrace();
+		}
+
 		String init_text = _gson.toJson(this);
 		try {
 			FileWriter writer = new FileWriter(_init_file);
@@ -244,8 +271,7 @@ public class Model implements DisplayMenuListener {
 			_currentView = model._currentView;
 			_currentScoreName = model._currentScoreName;
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.err.println("Library init not found. Creating a new one.");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -258,7 +284,7 @@ public class Model implements DisplayMenuListener {
 	private void loadScores() throws IOException {
 		File[] scores = _library.listFiles(new FileFilter() {
 			public boolean accept(File file) {
-				return !file.getName().equals("init.json") && !file.getName().equals(".DS_Store");
+				return file.isDirectory();
 			}
 		});
 
@@ -305,5 +331,25 @@ public class Model implements DisplayMenuListener {
 
 	public HcmpClient getHcmp() {
 		return _hcmp;
+	}
+
+	public void renameCurrentScore(String new_name) throws IOException {
+		if (scoreExists(new_name)) {
+			return;
+		}
+
+		Score score = getCurrentScore();
+		File from = new File(_library, score.getName());
+		File to = new File(_library, new_name);
+		Files.move(from.toPath(), to.toPath());
+		score.setName(new_name);
+		score.setRoot(to);
+		setCurrentScore(new_name);
+		_controller.libraryPathUpdated();
+	}
+
+	public void addPages(File[] images) throws IOException {
+		getCurrentScore().addPages(images);
+		_controller.scoreUpdated();
 	}
 }
