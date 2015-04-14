@@ -1,18 +1,21 @@
-# REQUIREMENTS
+REQUIREMENTS
+============
 
 * Java >= 1.7
 * Maven
 
 Development has been mainly done with Eclipse 4.4.1 and the m2e plugin.
 
-# INSTALLATION
+INSTALLATION
+============
 
 Run `maven install` on the `score` module then maven install on the `lsd` module.
 
 If using eclipse, first import both projects as local maven projects and then
 run `maven -> update configuration` on both projects.
 
-# USEAGE
+USEAGE
+============
 
 `cmu.edu.mat.lsd.Main` contains the entry point for the program.
 
