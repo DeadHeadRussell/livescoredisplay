@@ -10,7 +10,7 @@ public class Arrangement {
 
 	private List<Section> _list = new ArrayList<Section>();
 	@Expose
-	private List<Integer> _order;
+	private List<String> _order;
 
 	public Arrangement(Score score) {
 		_score = score;
@@ -29,7 +29,7 @@ public class Arrangement {
 	public void save(String string) {
 		String[] section_names = string.split("\\s+");
 		_list = new ArrayList<Section>();
-		_order = new ArrayList<Integer>();
+		_order = new ArrayList<String>();
 
 		List<Section> sections = _score.getSections();
 
@@ -44,7 +44,7 @@ public class Arrangement {
 			}
 			if (section != null) {
 				_list.add(section);
-				_order.add(_score.getSections().indexOf(section));
+				_order.add(section.getName());
 			} else {
 				java.lang.System.out.println("Could not find section: "
 						+ section_name);
@@ -221,8 +221,13 @@ public class Arrangement {
 		List<Section> sections = _score.getSections();
 		if (_list.size() == 0 && _order != null && sections.size() != 0) {
 			_list = new ArrayList<Section>(_order.size());
-			for (Integer i : _order) {
-				_list.add(_score.getSections().get(i));
+			for (String name : _order) {
+				for (Section section : sections) {
+					if (section.getName().equals(name)) {
+						_list.add(section);
+						break;
+					}
+				}
 			}
 		}
 	}
