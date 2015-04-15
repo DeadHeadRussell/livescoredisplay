@@ -56,12 +56,18 @@ public class Model implements DisplayMenuListener {
 	@Expose
 	private int _currentView = VIEW_NOTATION;
 
+	@Expose
+	private String _hcmpAddress = "localhost";
+	@Expose
+	private String _hcmpPullPort = "5544";
+	@Expose
+	private String _hcmpPublishPort = "5566";
+	@Expose
+	private boolean _hcmpEnabled = true;
+
 	private Tool _currentTool = null;
 
 	private HcmpClient _hcmp = new HcmpClient();
-	private static final String IP_ADDRESS = "localhost";
-	private static final String PORT_PULL = "5544";
-	private static final String PORT_PUBLISH = "5566";
 
 	public final Tool NEW_SYSTEM_TOOL = new NewSystemTool();
 	public final Tool NEW_BARLINE_TOOL = new NewBarlineTool();
@@ -77,8 +83,6 @@ public class Model implements DisplayMenuListener {
 		_controller = controller;
 		_gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation()
 				.setPrettyPrinting().create();
-
-		_hcmp.start(IP_ADDRESS, PORT_PULL, PORT_PUBLISH);
 
 		Preferences prefs = Preferences.userRoot();
 		String path = prefs.node("edu.cmu.mat.lsd").get("library", "");
@@ -139,6 +143,22 @@ public class Model implements DisplayMenuListener {
 		return _currentTool;
 	}
 
+	public String getHcmpAddress() {
+		return _hcmpAddress;
+	}
+
+	public String getHcmpPullPort() {
+		return _hcmpPullPort;
+	}
+
+	public String getHcmpPublishPort() {
+		return _hcmpPublishPort;
+	}
+
+	public boolean getHcmpEnabled() {
+		return _hcmpEnabled;
+	}
+
 	public void setWindowX(int windowX) {
 		_windowX = windowX;
 	}
@@ -188,6 +208,18 @@ public class Model implements DisplayMenuListener {
 		_controller.toolUpdated();
 	}
 
+	public void setHcmpData(String address, String pullPort, String publishPort) {
+		_hcmpAddress = address;
+		_hcmpPullPort = pullPort;
+		_hcmpPublishPort = publishPort;
+		restartHcmp();
+	}
+
+	public void setHcmpEnabled(boolean enabled) {
+		_hcmpEnabled = enabled;
+		restartHcmp();
+	}
+
 	public void onNewScore(String score_name, File[] images)
 			throws IOException, CompilerException {
 		if (!scoreExists(score_name)) {
@@ -202,6 +234,7 @@ public class Model implements DisplayMenuListener {
 	}
 
 	public void onSetPath(File path) throws IOException {
+		_hcmp.stop();
 		save();
 
 		Preferences prefs = Preferences.userRoot();
@@ -212,6 +245,8 @@ public class Model implements DisplayMenuListener {
 				+ "init.json");
 		load();
 		loadScores();
+
+		restartHcmp();
 
 		_controller.viewUpdated();
 		_controller.libraryPathUpdated();
@@ -270,6 +305,10 @@ public class Model implements DisplayMenuListener {
 			_windowHeight = model._windowHeight;
 			_currentView = model._currentView;
 			_currentScoreName = model._currentScoreName;
+			_hcmpAddress = model._hcmpAddress;
+			_hcmpPullPort = model._hcmpPullPort;
+			_hcmpPublishPort = model._hcmpPublishPort;
+			_hcmpEnabled = model._hcmpEnabled;
 		} catch (FileNotFoundException e) {
 			System.err.println("Library init not found. Creating a new one.");
 		} catch (IOException e) {
@@ -351,5 +390,12 @@ public class Model implements DisplayMenuListener {
 	public void addPages(File[] images) throws IOException {
 		getCurrentScore().addPages(images);
 		_controller.scoreUpdated();
+	}
+
+	private void restartHcmp() {
+		_hcmp.stop();
+		if (_hcmpEnabled) {
+			_hcmp.start(_hcmpAddress, _hcmpPullPort, _hcmpPublishPort);
+		}
 	}
 }
