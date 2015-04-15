@@ -218,15 +218,15 @@ public class Arrangement {
 	}
 
 	private void initList() {
-		List<Section> sections = _score.getSections();
-		if (_list.size() == 0 && _order != null && sections.size() != 0) {
+		if (_list.size() == 0 && _order != null) {
 			_list = new ArrayList<Section>(_order.size());
 			for (String name : _order) {
-				for (Section section : sections) {
-					if (section.getName().equals(name)) {
-						_list.add(section);
-						break;
-					}
+				Section section = _score.getSectionByName(name);
+				if (section != null) {
+					_list.add(section);
+				} else {
+					java.lang.System.err
+							.println("Could not find section named: " + name);
 				}
 			}
 		}
