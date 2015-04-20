@@ -5,7 +5,7 @@ import java.io.IOException;
 
 public interface DisplayMenuListener {
 
-	void onNewScore(String score_name);
+	void onNewScore(String score_name, File[] files);
 
 	void onNewArrangement();
 

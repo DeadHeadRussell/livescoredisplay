@@ -98,11 +98,13 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	public void onUpdateView() {
 		if (_model.getCurrentView() == Model.VIEW_DISPLAY) {
-			 String[] s1 = new String[] {"A,0,36","A,0,36","B,36,48","B,36,48","A,0,36"};
-			 String[] s2 = new String[] { "A,0,20","A,0,20","B,20,32","C,52,16","D,68,8","D,68,8","F,76,16"};
-			 handleNewArrangement(s2);
-			 handleNewPosition(0); handleNewTime(TimeMap.Create(new
-			 Date().getTime(), 0, 0.004)); handlePlay();
+			 String[] annie = new String[] {"A,0,36","A,0,36","B,36,48","B,36,48","A,0,36"};
+			 String[] boy = new String[] {"A,0,20","A,0,20","B,20,32","C,52,16","D,68,8","D,68,8","F,76,16"};
+			 String[] wings = new String[] {"A,0,16","B,16,32","B,16,32","C,48,60","D,108,148"};
+			 handleNewArrangement(wings);
+			 handleNewPosition(0); 
+			 handleNewTime(TimeMap.Create(new Date().getTime(), 0, 0.004)); 
+			 handlePlay();
 			 
 			_scroller.revalidate();
 			_scroller.repaint();

@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 
 import javax.swing.ButtonGroup;
@@ -14,6 +15,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import edu.cmu.mat.lsd.ControllerListener;
 import edu.cmu.mat.lsd.Model;
@@ -55,7 +57,13 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 		new_score.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
 				String name = JOptionPane.showInputDialog("Score Name");
-				_model.onNewScore(name);
+				JFileChooser chooser = new JFileChooser();
+				chooser.setFileFilter(new FileNameExtensionFilter("PNG","png"));
+				chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				chooser.setMultiSelectionEnabled(true);
+				chooser.showOpenDialog(null);
+				File[] files = chooser.getSelectedFiles();
+				_model.onNewScore(name, files);
 			}
 		});
 

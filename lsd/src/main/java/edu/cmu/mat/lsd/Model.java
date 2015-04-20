@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
@@ -159,8 +161,8 @@ public class Model implements DisplayMenuListener {
 				break;
 			}
 		}
-
 		_controller.scoreUpdated();
+
 	}
 
 	public void setCurrentView(int view) {
@@ -173,9 +175,30 @@ public class Model implements DisplayMenuListener {
 		_controller.toolUpdated();
 	}
 
-	public void onNewScore(String score_name) {
-		// TODO Auto-generated method stub
-
+	public void onNewScore(String score_name, File[] files) {
+		try {
+			String currDir = _library.getAbsolutePath() + File.separator + score_name;
+			new File(currDir).mkdir();
+			String imgDir = currDir + File.separator + "images";
+			File images = new File(imgDir);
+			images.mkdir();
+			for (File file: files) {
+				File to = new File(imgDir + File.separator + file.getName());
+				Files.copy(file.toPath(), to.toPath());	
+			}
+			onSetPath(_library);
+			
+			setCurrentScore(score_name);
+			
+			_controller.libraryPathUpdated();
+			_controller.viewUpdated();
+		}
+		catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 	}
 
 	public void onNewArrangement() {
