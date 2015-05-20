@@ -2,6 +2,7 @@ package edu.cmu.mat.scores;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gson.annotations.Expose;
 
@@ -31,12 +32,11 @@ public class Arrangement {
 		_list = new ArrayList<Section>();
 		_order = new ArrayList<String>();
 
-		List<Section> sections = _score.getSections();
+		Set<Section> sections = _score.getSections();
 
 		for (String section_name : section_names) {
 			Section section = null;
-			for (int i = 0; i < sections.size(); i++) {
-				Section s = sections.get(i);
+			for (Section s : sections) {
 				if (s.getName().equals(section_name)) {
 					section = s;
 					break;
@@ -61,15 +61,6 @@ public class Arrangement {
 		 * double barline_beat = findNextBarlineBeat(current_section,
 		 * section_beat); return (beat - section_beat) + barline_beat;
 		 */
-	}
-
-	public Barline getBarline(double beat) {
-		Section current_section = getSection(beat);
-		if (current_section == null) {
-			return null;
-		}
-		double section_beat = getSectionBeat(beat);
-		return getBarline(current_section, section_beat);
 	}
 
 	private Barline getBarline(Section section, double beat) {
@@ -110,111 +101,6 @@ public class Arrangement {
 		}
 
 		return null;
-	}
-
-	public Section getSection(double beat) {
-		int beat_tally = 0;
-		for (Section section : _list) {
-			int next_beat = beat_tally + getTotalBeats(section);
-			if (next_beat >= beat) {
-				return section;
-			}
-			beat_tally = next_beat;
-		}
-		return null;
-	}
-
-	public int getSectionNumber(double beat) {
-		int beat_tally = 0;
-		for (int i = 0; i < _list.size(); i++) {
-			int next_beat = beat_tally + getTotalBeats(_list.get(i));
-			if (next_beat >= beat) {
-				return i;
-			}
-			beat_tally = next_beat;
-		}
-		return -1;
-	}
-
-	private double getSectionBeat(double beat) {
-		int beat_tally = 0;
-		for (Section section : _list) {
-			int next_beat = beat_tally + getTotalBeats(section);
-			if (next_beat >= beat) {
-				return beat - beat_tally;
-			}
-			beat_tally = next_beat;
-		}
-		return -1;
-	}
-
-	private int getTotalBeats(Section section) {
-		List<Section> sections = _score.getSections();
-		Section next = null;
-		if (sections.indexOf(section) + 1 < sections.size()) {
-			next = sections.get(sections.indexOf(section) + 1);
-		}
-
-		Barline first_barline = section.getStart();
-		System first_system = first_barline.getParent();
-
-		System last_system;
-		Barline last_barline;
-
-		if (next == null) {
-			List<System> systems;
-			int last_page = 0;
-			do {
-				last_page++;
-				Page page = _score.getPage(_score.getNumberPages() - last_page);
-				systems = page.getSystems();
-			} while (systems.size() == 0);
-			last_system = systems.get(systems.size() - 1);
-			last_barline = last_system.getBarlines().get(
-					last_system.getBarlines().size() - 1);
-		} else {
-			last_barline = next.getStart();
-			last_system = last_barline.getParent();
-		}
-
-		int bar_count = 0;
-
-		List<Barline> barlines = first_system.getBarlines();
-		if (first_system == last_system) {
-			bar_count += barlines.indexOf(last_barline)
-					- barlines.indexOf(first_barline);
-		} else {
-			bar_count += barlines.size() - 1 - barlines.indexOf(first_barline);
-			bar_count += last_system.getBarlines().indexOf(last_barline);
-
-			Page first_page = first_system.getParent();
-			Page last_page = last_system.getParent();
-
-			List<System> systems = first_page.getSystems();
-			int first_index = systems.indexOf(first_system) + 1;
-			if (first_page == last_page) {
-				int last_index = systems.indexOf(last_system);
-				for (int i = first_index; i < last_index; i++) {
-					bar_count += systems.get(i).getBarlines().size() - 1;
-				}
-			} else {
-				for (int i = first_index; i < systems.size(); i++) {
-					bar_count += systems.get(i).getBarlines().size() - 1;
-				}
-
-				List<Page> pages = _score.getPages().subList(
-						_score.getPages().indexOf(first_page),
-						_score.getPages().indexOf(last_page));
-
-				for (Page page : pages) {
-					for (System system : page.getSystems()) {
-						bar_count += system.getBarlines().size() - 1;
-					}
-				}
-			}
-		}
-		// XXX: This assumes all time signatures are 4/4.
-		return bar_count * 4;
 	}
 
 	private void initList() {

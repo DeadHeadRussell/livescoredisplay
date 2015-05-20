@@ -1,14 +1,18 @@
 package edu.cmu.mat.lsd.tools;
 
+import java.awt.FontMetrics;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 import edu.cmu.mat.lsd.components.JPage;
 import edu.cmu.mat.scores.Barline;
 import edu.cmu.mat.scores.Page;
 import edu.cmu.mat.scores.ScoreObject;
+import edu.cmu.mat.scores.Section;
 import edu.cmu.mat.scores.System;
 import edu.cmu.mat.scores.events.Event;
+import edu.cmu.mat.scores.events.SectionStartEvent;
 
 public abstract class Tool {
 
@@ -41,13 +45,7 @@ public abstract class Tool {
 			return system;
 		}
 
-		Event event = GetIntersectedEvent(page, mouse_point);
-
-		if (event != null) {
-			return event;
-		}
-
-		return null;
+		return GetIntersectedEvent(page, mouse_point);
 	}
 
 	public static System GetIntersectedSystem(Page page, Point mouse_point) {
@@ -95,7 +93,7 @@ public abstract class Tool {
 		}
 		return null;
 	}
-	
+
 	public static Barline GetRightBarline(Page page, Point mouse_point) {
 		System system = GetIntersectedSystem(page, mouse_point);
 		if (system == null) {
@@ -115,40 +113,55 @@ public abstract class Tool {
 			return null;
 		}
 
-		/*
 		for (System system : page.getSystems()) {
 			for (Barline barline : system.getBarlines()) {
 				int offset = -5;
 
 				for (Event event : barline.getEvents()) {
-					// XXX: All events are sections for now.
-					// XXX: This is a huge hack. For this function (and I
-					// suppose the others above), I need centralized hit
-					// detection)
-					// XXX: JPage owns a callback interface which is used for
-					// hit detection. SOLVED.
-					/*
-					 * Section section = (Section) event; String section_name =
-					 * section.getName(); FontMetrics metrics =
-					 * JPage.FONT_METRICS; int string_width =
-					 * metrics.stringWidth(section_name); int string_height =
-					 * metrics.getHeight();
-					 * 
-					 * int width = string_width + 6; int height = string_height
-					 * + 6;
-					 * 
-					 * int x = barline.getOffset() + offset + 5; int y =
-					 * system.getTop() - height - 5;
-					 * 
-					 * Rectangle rect = new Rectangle(x, y, width, height); if
-					 * (rect.contains(mouse_point)) { return event; }
-					 * 
-					 * offset += width + 5;
-					 /
+					String text = "";
+
+					switch (event.getType()) {
+					case SECTION_START:
+						Section section = ((SectionStartEvent) event)
+								.getSection();
+						text = section.getName() + " (";
+						break;
+
+					case SECTION_END:
+						text = ")";
+						break;
+
+					case REPEAT_START:
+						text = "|:";
+						break;
+
+					case REPEAT_END:
+						text = ":|";
+						break;
+
+					default:
+						continue;
+					}
+
+					FontMetrics metrics = JPage.FONT_METRICS;
+					int string_width = metrics.stringWidth(text);
+					int string_height = metrics.getHeight();
+
+					int width = string_width + 6;
+					int height = string_height + 6;
+
+					int x = barline.getOffset() + offset + 5;
+					int y = system.getTop() - height - 5;
+
+					Rectangle rect = new Rectangle(x, y, width, height);
+					if (rect.contains(mouse_point)) {
+						return event;
+					}
+
+					offset += width + 5;
 				}
 			}
 		}
-		*/
 
 		return null;
 	}

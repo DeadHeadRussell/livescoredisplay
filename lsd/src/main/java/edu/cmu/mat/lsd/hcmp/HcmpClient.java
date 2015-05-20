@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.Timer;
@@ -249,8 +250,9 @@ public class HcmpClient implements HcmpMessenger {
 			int duration = end_beat - start_beat;
 			int initial_end = end_beat;
 
-			List<Integer> start_repeats = new ArrayList<Integer>(section
-					.getRepeats().keySet());
+			Map<Integer, Integer> repeats = score.getRepeatsBySection(section);
+			List<Integer> start_repeats = new ArrayList<Integer>(
+					repeats.keySet());
 			start_repeats.sort(new Comparator<Integer>() {
 				public int compare(Integer arg0, Integer arg1) {
 					return arg0 - arg1;
@@ -258,7 +260,7 @@ public class HcmpClient implements HcmpMessenger {
 			});
 
 			for (int start_repeat : start_repeats) {
-				int end_repeat = section.getRepeats().get(start_repeat) * 4;
+				int end_repeat = repeats.get(start_repeat) * 4;
 				start_repeat *= 4;
 				int repeat_duration = end_repeat - start_repeat;
 

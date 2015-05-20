@@ -3,7 +3,7 @@ package edu.cmu.mat.scores;
 import java.awt.Point;
 
 public interface ScoreObject {
-	public void move(Point distance, ScoreObject intersect);
+	public ScoreObject move(Point distance, ScoreObject intersect);
 
 	public void delete();
 

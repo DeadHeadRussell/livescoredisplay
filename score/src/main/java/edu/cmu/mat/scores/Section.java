@@ -2,25 +2,23 @@ package edu.cmu.mat.scores;
 
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import com.google.gson.annotations.Expose;
 
-import edu.cmu.mat.scores.events.RepeatEndEvent;
-import edu.cmu.mat.scores.events.RepeatStartEvent;
+import edu.cmu.mat.scores.events.Event;
+import edu.cmu.mat.scores.events.SectionEndEvent;
+import edu.cmu.mat.scores.events.SectionStartEvent;
 
 public class Section {
+	private Score _score;
+
 	@Expose
 	private String _name = "";
 	@Expose
 	private int _start_index;
 	@Expose
 	private int _end_index;
-	@Expose
-	private Map<Integer, Integer> _repeats = new HashMap<Integer, Integer>();
 
 	private Barline _start;
 	private Barline _end;
@@ -29,52 +27,56 @@ public class Section {
 	public static final int NOT_ACTIVE = 0;
 	public static final int ACTIVE = 1;
 
-	public Section(Barline start, Barline end) {
+	public Section() {
+		// This is required for Gson to deserialze default values.
+	}
+
+	public Section(Score score, Barline start, Barline end) {
+		_score = score;
 		_start = start;
 		_end = end;
-
-		Score score = _start.getParent().getParent().getParent();
-		List<Barline> start_barlines = score.getStartBarlines();
-		List<Barline> end_barlines = score.getEndBarlines();
-		_start_index = start_barlines.indexOf(_start);
-		_end_index = end_barlines.indexOf(_end);
+		normalize();
 	}
 
 	public Section(Score score, Section other) {
+		_score = score;
 		_name = other._name;
 		_start_index = other._start_index;
 		_end_index = other._end_index;
 
-		List<Barline> start_barlines = score.getStartBarlines();
-		List<Barline> end_barlines = score.getEndBarlines();
+		List<Barline> start_barlines = _score.getStartBarlines();
+		List<Barline> end_barlines = _score.getEndBarlines();
 		_start = start_barlines.get(_start_index);
 		_end = end_barlines.get(_end_index);
+	}
 
-		if (other._repeats != null) {
-			for (Entry<Integer, Integer> set : other._repeats.entrySet()) {
-				_repeats.put(set.getKey(), set.getValue());
-				RepeatStartEvent start_event = new RepeatStartEvent();
-				RepeatEndEvent end_event = new RepeatEndEvent(start_event);
-				start_barlines.get(set.getKey()).addEvent(start_event);
-				end_barlines.get(set.getValue()).addEvent(end_event);
+	public void normalize() {
+		_start_index = _score.getStartBarlines().indexOf(_start);
+		_end_index = _score.getEndBarlines().indexOf(_end);
+	}
+
+	public SectionStartEvent getStartEvent() {
+		for (Event event : getStart().getEvents()) {
+			if (event.getType() == Event.Type.SECTION_START) {
+				SectionStartEvent startEvent = (SectionStartEvent) event;
+				if (startEvent.getSection() == this) {
+					return startEvent;
+				}
 			}
 		}
+		return null;
 	}
 
-	public void addRepeat(Barline start, Barline end) {
-		Score score = getStart().getParent().getParent().getParent();
-		List<Barline> start_barlines = score.getStartBarlines();
-		List<Barline> end_barlines = score.getEndBarlines();
-		_repeats.put(start_barlines.indexOf(start), end_barlines.indexOf(end));
-
-		RepeatStartEvent start_event = new RepeatStartEvent();
-		RepeatEndEvent end_event = new RepeatEndEvent(start_event);
-		start.addEvent(start_event);
-		end.addEvent(end_event);
-	}
-
-	public Map<Integer, Integer> getRepeats() {
-		return _repeats;
+	public SectionEndEvent getEndEvent() {
+		for (Event event : getEnd().getEvents()) {
+			if (event.getType() == Event.Type.SECTION_END) {
+				SectionEndEvent endEvent = (SectionEndEvent) event;
+				if (endEvent.getSection() == this) {
+					return endEvent;
+				}
+			}
+		}
+		return null;
 	}
 
 	public Section setName(String name) {
@@ -84,16 +86,6 @@ public class Section {
 
 	public void setState(int state) {
 		_state = state;
-	}
-
-	public void move(Point distance, ScoreObject intersect) {
-		if (intersect != null && intersect.getClass() == Barline.class) {
-			Barline barline = (Barline) intersect;
-			Score score = _start.getParent().getParent().getParent();
-			score.removeSection(this);
-			_start = barline;
-			score.addSection(this);
-		}
 	}
 
 	public void setActive(Point location) {
@@ -140,10 +132,6 @@ public class Section {
 		}
 	}
 
-	public void normalize() {
-		// Does nothing.
-	}
-
 	public void deleteChild(ScoreObject child) {
 		// Does nothing.
 	}
@@ -174,5 +162,15 @@ public class Section {
 
 	public void delete() {
 		_start.getParent().getParent().getParent().removeSection(this);
+	}
+
+	public boolean isActive() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public void move(Object object, Barline intersect) {
+		// TODO Auto-generated method stub
+		
 	}
 }

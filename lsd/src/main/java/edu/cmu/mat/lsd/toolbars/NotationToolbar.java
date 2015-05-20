@@ -10,6 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -176,7 +177,7 @@ public class NotationToolbar implements Toolbar, ControllerListener {
 
 		Joiner joiner = Joiner.on("  ");
 
-		List<Section> sections = score.getSections();
+		Set<Section> sections = score.getSections();
 		List<String> section_names = new ArrayList<String>(sections.size());
 		for (Section section : sections) {
 			section_names.add(section.getName());

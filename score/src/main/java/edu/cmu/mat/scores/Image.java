@@ -14,8 +14,6 @@ public class Image {
 
 	public Image(BufferedImage image) {
 		_originalImage = image;
-		// _resizedImage = image.getScaledInstance(image.getWidth(),
-		// image.getHeight(), BufferedImage.SCALE_SMOOTH);
 
 		int width = image.getWidth();
 		int height = image.getHeight();
@@ -35,10 +33,18 @@ public class Image {
 		double factor;
 
 		if (dimension == DIMENSION_WIDTH) {
+			if (_resizedImage.getWidth(null) == size) {
+				return;
+			}
+
 			width = size;
 			factor = width / ((double) _originalImage.getWidth());
 			height = (int) (_originalImage.getHeight() * factor);
 		} else {
+			if (_resizedImage.getHeight(null) == size) {
+				return;
+			}
+
 			height = size;
 			factor = height / ((double) _originalImage.getHeight());
 			width = (int) (_originalImage.getWidth() * factor);

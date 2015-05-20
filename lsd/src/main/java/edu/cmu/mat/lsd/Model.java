@@ -29,6 +29,7 @@ import edu.cmu.mat.lsd.tools.Tool;
 import edu.cmu.mat.parsers.exceptions.CompilerException;
 import edu.cmu.mat.scores.Barline;
 import edu.cmu.mat.scores.Score;
+import edu.cmu.mat.scores.ScoreObject;
 import edu.cmu.mat.scores.Section;
 
 public class Model implements DisplayMenuListener {
@@ -74,10 +75,15 @@ public class Model implements DisplayMenuListener {
 	public final Tool NEW_SECTION_TOOL = new NewSectionTool(this);
 	public final Tool NEW_REPEAT_TOOL = new NewRepeatTool(this);
 	public final Tool MOVE_TOOL = new MoveTool();
-	public final Tool DELETE_TOOL = new DeleteTool();
+	public final Tool DELETE_TOOL = new DeleteTool(this);
 
 	public final static int VIEW_NOTATION = 0;
 	public final static int VIEW_DISPLAY = 1;
+
+	public Model() {
+		// This is required for Gson to properly initiate variables during
+		// deserialization.
+	}
 
 	public Model(Controller controller) {
 		_controller = controller;
@@ -312,7 +318,6 @@ public class Model implements DisplayMenuListener {
 		} catch (FileNotFoundException e) {
 			System.err.println("Library init not found. Creating a new one.");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -397,5 +402,10 @@ public class Model implements DisplayMenuListener {
 		if (_hcmpEnabled) {
 			_hcmp.start(_hcmpAddress, _hcmpPullPort, _hcmpPublishPort);
 		}
+	}
+
+	public void deleteChild(ScoreObject parent, ScoreObject child) {
+		parent.deleteChild(child);
+		_controller.scoreUpdated();
 	}
 }

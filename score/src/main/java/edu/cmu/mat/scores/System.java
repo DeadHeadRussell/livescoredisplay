@@ -60,13 +60,14 @@ public class System implements ScoreObject {
 		_state = state;
 	}
 
-	public void move(Point distance, ScoreObject intersect) {
+	public ScoreObject move(Point distance, ScoreObject intersect) {
 		if (_state == BOTTOM_ACTIVE || _state == ALL_ACTIVE) {
 			_bottom += distance.y;
 		}
 		if (_state == TOP_ACTIVE || _state == ALL_ACTIVE) {
 			_top += distance.y;
 		}
+		return null;
 	}
 
 	public void setActive(Point location) {
@@ -95,6 +96,10 @@ public class System implements ScoreObject {
 				return bar1.getOffset() - bar2.getOffset();
 			}
 		});
+
+		for (Barline barline : _barlines) {
+			barline.normalize();
+		}
 	}
 
 	public void addBarline(Barline barline) {
@@ -111,7 +116,7 @@ public class System implements ScoreObject {
 	public int getBottom() {
 		return _bottom;
 	}
-	
+
 	// Not the real height displayed
 	public int getInnerHeight() {
 		return _bottom - _top;

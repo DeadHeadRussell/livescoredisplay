@@ -57,6 +57,10 @@ public class Page implements ScoreObject {
 				return sys1.getTop() - sys2.getTop();
 			}
 		});
+
+		for (System system : _systems) {
+			system.normalize();
+		}
 	}
 
 	public Image getImage() {
@@ -70,7 +74,7 @@ public class Page implements ScoreObject {
 	public System getFirstSystem() {
 		return _systems.get(0);
 	}
-	
+
 	public System getLastSystem() {
 		return _systems.get(_systems.size() - 1);
 	}
@@ -79,8 +83,9 @@ public class Page implements ScoreObject {
 		return _parent;
 	}
 
-	public void move(Point distance, ScoreObject intersect) {
+	public ScoreObject move(Point distance, ScoreObject intersect) {
 		// Does nothing.
+		return null;
 	}
 
 	public void setActive(Point location) {

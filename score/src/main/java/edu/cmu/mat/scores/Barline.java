@@ -45,8 +45,9 @@ public class Barline implements ScoreObject {
 		_events.add(event);
 	}
 
-	public void move(Point distance, ScoreObject intersect) {
+	public ScoreObject move(Point distance, ScoreObject intersect) {
 		_offset += distance.x;
+		return null;
 	}
 
 	public void setActive(Point location) {

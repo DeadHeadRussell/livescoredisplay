@@ -7,8 +7,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 
@@ -20,6 +23,8 @@ import edu.cmu.mat.parsers.JsonParser;
 import edu.cmu.mat.parsers.exceptions.CompilerException;
 import edu.cmu.mat.scores.events.Event;
 import edu.cmu.mat.scores.events.EventTypeAdapter;
+import edu.cmu.mat.scores.events.RepeatEndEvent;
+import edu.cmu.mat.scores.events.RepeatStartEvent;
 import edu.cmu.mat.scores.events.SectionEndEvent;
 import edu.cmu.mat.scores.events.SectionStartEvent;
 
@@ -29,54 +34,53 @@ public class Score implements ScoreObject {
 			.excludeFieldsWithoutExposeAnnotation().setPrettyPrinting()
 			.registerTypeAdapter(Event.class, new EventTypeAdapter()).create();
 
-	// XXX: Sections will need some good way to be exported and imported with
-	// GSON, since three locations, this score, bar events, and arrangements,
-	// access them. We do not want imports to duplicate them.
-
 	private File _root;
 
 	@Expose
 	private String _name;
 	@Expose
-	private List<Section> _sections;
+	private Set<Section> _sections;
+	@Expose
+	private Set<Repeat> _repeats;
 	@Expose
 	private List<Page> _pages;
 
 	@Expose
 	private Arrangement _arrangement = new Arrangement(this);
 
-	public Score(File root, String name, List<Section> sections,
-			List<Page> pages) {
+	public Score(File root, String name, Set<Section> sections,
+			Set<Repeat> repeats, List<Page> pages) {
 		_root = root;
 		_name = name;
 		_sections = sections;
+		_repeats = repeats;
 		_pages = pages;
 	}
 
 	public Score(File root, String name) {
-		this(root, name, new LinkedList<Section>(), new ArrayList<Page>());
+		this(root, name, new HashSet<Section>(), new HashSet<Repeat>(),
+				new ArrayList<Page>());
 	}
 
 	public Score(File root, String name, List<Image> images) {
 		this(root, name);
 		for (Image image : images) {
-			addPage(new Page(this, image));
+			_pages.add(new Page(this, image));
 		}
 	}
 
 	public Score(File root, Score other, List<Image> images) {
 		this(root, other.getName());
-		for (int i = 0; i < other.getNumberPages(); i++) {
-			addPage(new Page(this, other.getPage(i), images.get(i)));
+		for (int i = 0; i < other._pages.size(); i++) {
+			_pages.add(new Page(this, other._pages.get(i), images.get(i)));
 		}
 
-		for (Section section : other.getSections()) {
-			Section new_section = new Section(this, section);
-			addSection(new_section);
-			Barline start = new_section.getStart();
-			Barline end = new_section.getEnd();
-			start.addEvent(new SectionStartEvent(start, new_section));
-			end.addEvent(new SectionEndEvent(end, new_section));
+		for (Section section : other._sections) {
+			_sections.add(new Section(this, section));
+		}
+
+		for (Repeat repeat : other._repeats) {
+			_repeats.add(new Repeat(this, repeat));
 		}
 
 		// Initializing arrangements has to come after initializing the pages
@@ -96,64 +100,32 @@ public class Score implements ScoreObject {
 		return _name;
 	}
 
-	public int getNumberSections() {
-		return _sections.size();
-	}
-
-	public Section getSection(int index) {
-		return _sections.get(index);
-	}
-
 	public Section addSection(Barline start, Barline end) {
 		if (start == null || end == null) {
 			return null;
 		}
 
-		Section new_section = new Section(start, end);
-		start.addEvent(new SectionStartEvent(start, new_section));
-		end.addEvent(new SectionEndEvent(end, new_section));
-
-		for (int i = 0; i < _sections.size(); i++) {
-			Section section = _sections.get(i);
-			if (compareLocation(section.getStart(), start) > 0) {
-				_sections.add(i, new_section);
-				return new_section;
-			}
-		}
-
-		_sections.add(new_section);
-		return new_section;
+		Section newSection = new Section(this, start, end);
+		_sections.add(newSection);
+		return newSection;
 	}
 
-	public Section addRepeat(Barline start, Barline end) {
+	public Repeat addRepeat(Barline start, Barline end) {
 		if (start == null || end == null) {
 			return null;
 		}
 
-		for (int i = 0; i < _sections.size(); i++) {
-			Section section = _sections.get(i);
-			if (compareLocation(section.getStart(), start) >= 0) {
-				section.addRepeat(start, end);
-				return section;
-			}
-		}
-		return null;
+		Repeat newRepeat = new Repeat(this, start, end);
+		_repeats.add(newRepeat);
+		return newRepeat;
 	}
 
-	public void addSection(Section new_section) {
-		for (int i = 0; i < _sections.size(); i++) {
-			Section section = _sections.get(i);
-			if (compareLocation(section.getStart(), new_section.getStart()) > 0) {
-				_sections.add(i, new_section);
-				return;
-			}
-		}
-
-		_sections.add(new_section);
-	}
-
-	public List<Section> getSections() {
+	public Set<Section> getSections() {
 		return _sections;
+	}
+
+	public Set<Repeat> getRepeats() {
+		return _repeats;
 	}
 
 	public Section getSectionByName(String name) {
@@ -165,31 +137,19 @@ public class Score implements ScoreObject {
 		return null;
 	}
 
+	public Map<Integer, Integer> getRepeatsBySection(Section section) {
+		// int startIndex = section.getStartIndex();
+		// int endIndex = section.getEndIndex();
+
+		return null;
+	}
+
 	public void removeSection(Section section) {
-		// This does not yet remove any associated repeat events.
 		if (section == null) {
 			return;
 		}
 		_sections.remove(section);
-		List<Event> events = new ArrayList<Event>();
-		events.addAll(section.getStart().getEvents());
-		events.addAll(section.getEnd().getEvents());
-
-		for (int i = 0; i < events.size(); i++) {
-			Event event = events.get(i);
-			Section s = null;
-			if (event.getType() == Event.Type.SECTION_START) {
-				s = ((SectionStartEvent) event).getSection();
-			} else if (event.getType() == Event.Type.SECTION_END) {
-				s = ((SectionEndEvent) event).getSection();
-			}
-
-			if (s != null && s == section) {
-				section.getStart().deleteChild(event);
-				section.getEnd().deleteChild(event);
-				break;
-			}
-		}
+		section.delete();
 	}
 
 	public void addPage(Page page) {
@@ -205,7 +165,7 @@ public class Score implements ScoreObject {
 			String ext = fromString.substring(fromString.lastIndexOf('.'));
 			File to = new File(imagesDir, String.valueOf(num + i + 1) + ext);
 			Files.copy(images[i].toPath(), to.toPath());
-			addPage(new Page(this, new Image(ImageIO.read(to))));
+			_pages.add(new Page(this, new Image(ImageIO.read(to))));
 		}
 	}
 
@@ -293,11 +253,7 @@ public class Score implements ScoreObject {
 	}
 
 	public List<Section> getArrangementList() {
-		List<Section> arrangement = _arrangement.getList();
-		if (arrangement.size() == 0) {
-			return getSections();
-		}
-		return arrangement;
+		return _arrangement.getList();
 	}
 
 	public void saveArrangment(String string) {
@@ -324,8 +280,9 @@ public class Score implements ScoreObject {
 		return loc;
 	}
 
-	public void move(Point distance, ScoreObject intersect) {
+	public ScoreObject move(Point distance, ScoreObject intersect) {
 		// Does nothing.
+		return null;
 	}
 
 	public void setActive(Point location) {
@@ -337,15 +294,25 @@ public class Score implements ScoreObject {
 	}
 
 	public void normalize() {
-		// Does nothing.
+		for (Page page : _pages) {
+			page.normalize();
+		}
+
+		for (Section section : _sections) {
+			section.normalize();
+		}
+
+		for (Repeat repeat : _repeats) {
+			repeat.normalize();
+		}
 	}
 
 	public void delete() {
-		// Does nothing.
+		// TODO: Allow removal of score.
 	}
 
 	public void deleteChild(ScoreObject child) {
-		// Does nothing.
+		// TODO: Remove page.
 	}
 
 	public List<Barline> getStartBarlines() {
@@ -394,16 +361,17 @@ public class Score implements ScoreObject {
 				String[] parts = section_string.split(",");
 				String name = parts[0];
 
-				/*
-				 * int start = Integer.parseInt(parts[1]) / 4; int end =
-				 * Integer.parseInt(parts[2]) / 4 + start;
-				 * 
-				 * Barline start_barline = start_barlines.get(start); Barline
-				 * end_barline = end_barlines.get(end); Section section = new
-				 * Section(start_barline, end_barline); section.setName(name);
-				 */
+				// TODO: This currently works with Section names. Instead, this
+				// should be using a proper flattened score mapping.
 
 				Section section = getSectionByName(name);
+				if (section == null) {
+					java.lang.System.err
+							.println("Could not find section with name: "
+									+ name);
+					continue;
+				}
+
 				Barline start_barline = section.getStart();
 				Barline end_barline = section.getEnd();
 				int start = start_barlines.indexOf(start_barline);
@@ -520,7 +488,6 @@ public class Score implements ScoreObject {
 		PlaybackEvent curr = event;
 		PlaybackEvent next = event;
 		while (index < size - 1) {
-
 			curr = next;
 			next = events.get(index + 1);
 			index++;

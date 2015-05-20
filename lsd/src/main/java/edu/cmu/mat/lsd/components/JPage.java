@@ -19,12 +19,8 @@ import edu.cmu.mat.lsd.tools.Tool;
 import edu.cmu.mat.scores.Barline;
 import edu.cmu.mat.scores.Image;
 import edu.cmu.mat.scores.Page;
-import edu.cmu.mat.scores.Section;
 import edu.cmu.mat.scores.System;
 import edu.cmu.mat.scores.events.Event;
-import edu.cmu.mat.scores.events.RepeatEndEvent;
-import edu.cmu.mat.scores.events.RepeatStartEvent;
-import edu.cmu.mat.scores.events.SectionEndEvent;
 import edu.cmu.mat.scores.events.SectionStartEvent;
 
 public class JPage extends JPanel {
@@ -35,6 +31,8 @@ public class JPage extends JPanel {
 			BorderFactory.createLoweredBevelBorder());
 
 	private static int IMAGE_HEIGHT = 800;
+	private static int IMAGE_WIDTH = 600;
+	private static float IDEAL_ASPECT = IMAGE_HEIGHT / IMAGE_WIDTH;
 
 	private static int BOX_HEIGHT = 16;
 	private static int PAGE_LEFT = 8;
@@ -47,8 +45,7 @@ public class JPage extends JPanel {
 	private static Color COLOR_BARLINE = Color.BLUE;
 	private static Color COLOR_BAR_ACTIVE = COLOR_LIGHT;
 	private static Color COLOR_BARLINE_ACTIVE = new Color(0, 0, 220, 80);
-	private static Color COLOR_SECTION = new Color(200, 200, 200, 250);
-	private static Color COLOR_REPEAT = new Color(200, 200, 200, 250);
+	private static Color COLOR_EVENT = new Color(200, 200, 200, 250);
 
 	private Model _model;
 	private JPage _jpage;
@@ -62,11 +59,18 @@ public class JPage extends JPanel {
 		_page = page;
 
 		Image image = page.getImage();
-		image.resize(IMAGE_HEIGHT, Image.DIMENSION_HEIGHT);
+		float aspectRatio = image.getImage().getHeight(null)
+				/ image.getImage().getWidth(null);
+		if (aspectRatio >= IDEAL_ASPECT) {
+			image.resize(IMAGE_HEIGHT, Image.DIMENSION_HEIGHT);
+		} else {
+			image.resize(IMAGE_WIDTH, Image.DIMENSION_WIDTH);
+		}
 
 		ImageIcon icon = new ImageIcon(image.getImage());
 		JLabel imageLabel = new JLabel("", icon, JLabel.CENTER);
 		imageLabel.setBorder(PAGE_BORDER);
+		imageLabel.setVerticalAlignment(JLabel.TOP);
 
 		addMouseListener(new PageMouseListener(page));
 		addMouseMotionListener(new PageMouseMotionListener(page));
@@ -96,36 +100,34 @@ public class JPage extends JPanel {
 
 				List<Event> events = barline.getEvents();
 				int offset = -5;
+
 				for (Event event : events) {
+					String label = "";
+
 					switch (event.getType()) {
 					case SECTION_START:
-						Section section_start = ((SectionStartEvent) event)
-								.getSection();
-						offset = drawSectionStart(graphics, system, barline,
-								section_start, offset);
+						SectionStartEvent sectionStart = ((SectionStartEvent) event);
+						label = sectionStart.getSection().getName() + " (";
 						break;
+
 					case SECTION_END:
-						Section section_end = ((SectionEndEvent) event)
-								.getSection();
-						offset = drawSectionEnd(graphics, system, barline,
-								section_end, offset);
+						label = ")";
 						break;
 
 					case REPEAT_START:
-						RepeatStartEvent repeat_start = ((RepeatStartEvent) event);
-						offset = drawRepeatStart(graphics, system, barline,
-								repeat_start, offset);
+						label = "|:";
 						break;
 
 					case REPEAT_END:
-						RepeatEndEvent repeat_end = ((RepeatEndEvent) event);
-						offset = drawRepeatEnd(graphics, system, barline,
-								repeat_end, offset);
-
+						label = ":|";
 						break;
+
 					default:
 						break;
 					}
+
+					offset = drawEvent(graphics, system, barline, label,
+							event.isActive(), offset);
 				}
 			}
 		}
@@ -188,102 +190,26 @@ public class JPage extends JPanel {
 
 	}
 
-	private int drawSectionStart(Graphics graphics, System system,
-			Barline barline, Section section, int offset) {
-		String section_name = section.getName() + " (";
-		int string_width = FONT_METRICS.stringWidth(section_name);
-		int string_height = FONT_METRICS.getHeight();
-		int width = string_width + 6;
-		int height = string_height + 6;
+	private int drawEvent(Graphics graphics, System system, Barline barline,
+			String text, boolean isActive, int offset) {
+		int stringWidth = FONT_METRICS.stringWidth(text);
+		int stringHeight = FONT_METRICS.getHeight();
+		int width = stringWidth + 6;
+		int height = stringHeight + 6;
 
 		int x = barline.getOffset() + offset + 5;
 		int y = system.getTop() - height - 5;
 		offset += width + 5;
 
-		graphics.setColor(COLOR_SECTION);
+		graphics.setColor(COLOR_EVENT);
 		graphics.fillRect(x, y, width, height);
 
 		graphics.setColor(Color.BLACK);
-		if (section.getState() == Section.ACTIVE) {
+		if (isActive) {
 			graphics.setColor(Color.WHITE);
 		}
 		graphics.drawRect(x, y, width, height);
-		graphics.drawString(section_name, x + 3, y + string_height);
-
-		return offset;
-	}
-
-	private int drawSectionEnd(Graphics graphics, System system,
-			Barline barline, Section section, int offset) {
-		String section_name = ")";
-		int string_width = FONT_METRICS.stringWidth(section_name);
-		int string_height = FONT_METRICS.getHeight();
-		int width = string_width + 6;
-		int height = string_height + 6;
-
-		int x = barline.getOffset() + offset + 5;
-		int y = system.getTop() - height - 5;
-		offset += width + 5;
-
-		graphics.setColor(COLOR_SECTION);
-		graphics.fillRect(x, y, width, height);
-
-		graphics.setColor(Color.BLACK);
-		if (section.getState() == Section.ACTIVE) {
-			graphics.setColor(Color.WHITE);
-		}
-		graphics.drawRect(x, y, width, height);
-		graphics.drawString(section_name, x + 3, y + string_height);
-
-		return offset;
-	}
-
-	private int drawRepeatStart(Graphics graphics, System system,
-			Barline barline, RepeatStartEvent repeat_start, int offset) {
-		String text = "|:";
-		int string_width = FONT_METRICS.stringWidth(text);
-		int string_height = FONT_METRICS.getHeight();
-		int width = string_width + 6;
-		int height = string_height + 6;
-
-		int x = barline.getOffset() + offset + 5;
-		int y = system.getTop() - height - 5;
-		offset += width + 5;
-
-		graphics.setColor(COLOR_REPEAT);
-		graphics.fillRect(x, y, width, height);
-
-		graphics.setColor(Color.BLACK);
-		if (repeat_start.getState() == Section.ACTIVE) {
-			graphics.setColor(Color.WHITE);
-		}
-		graphics.drawRect(x, y, width, height);
-		graphics.drawString(text, x + 3, y + string_height);
-
-		return offset;
-	}
-
-	private int drawRepeatEnd(Graphics graphics, System system,
-			Barline barline, RepeatEndEvent repeat_end, int offset) {
-		String text = ":|";
-		int string_width = FONT_METRICS.stringWidth(text);
-		int string_height = FONT_METRICS.getHeight();
-		int width = string_width + 6;
-		int height = string_height + 6;
-
-		int x = barline.getOffset() + offset + 5;
-		int y = system.getTop() - height - 5;
-		offset += width + 5;
-
-		graphics.setColor(COLOR_REPEAT);
-		graphics.fillRect(x, y, width, height);
-
-		graphics.setColor(Color.BLACK);
-		if (repeat_end.getState() == Section.ACTIVE) {
-			graphics.setColor(Color.WHITE);
-		}
-		graphics.drawRect(x, y, width, height);
-		graphics.drawString(text, x + 3, y + string_height);
+		graphics.drawString(text, x + 3, y + stringHeight);
 
 		return offset;
 	}

@@ -9,17 +9,12 @@ import edu.cmu.mat.scores.Section;
 public class SectionEndEvent extends Event {
 	private Barline _parent;
 	private Section _section;
-	private boolean _is_repeat;
 
 	public SectionEndEvent(Barline parent, Section section) {
 		_parent = parent;
 		_section = section;
 	}
 
-	public void setRepeat(boolean repeat) {
-		_is_repeat = repeat;
-	}
-	
 	public Section getSection() {
 		return _section;
 	}
@@ -30,27 +25,32 @@ public class SectionEndEvent extends Event {
 	}
 
 	@Override
-	public void move(Point distance, ScoreObject intersect) {
-		// TODO Auto-generated method stub
-
+	public ScoreObject move(Point distance, ScoreObject intersect) {
+		if (intersect != null && intersect.getClass() == Barline.class
+				&& intersect != _parent) {
+			_section.move(null, (Barline) intersect);
+			return _section.getEndEvent();
+		}
+		return null;
 	}
 
 	@Override
 	public void deleteChild(ScoreObject child) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void setActive(Point location) {
-		// TODO Auto-generated method stub
-
+		_section.setActive(location);
 	}
 
 	@Override
 	public void setInactive() {
-		// TODO Auto-generated method stub
+		_section.setInactive();
+	}
 
+	@Override
+	public boolean isActive() {
+		return _section.isActive();
 	}
 
 	@Override
@@ -60,15 +60,9 @@ public class SectionEndEvent extends Event {
 
 	@Override
 	public void normalize() {
-		// TODO Auto-generated method stub
-
 	}
 
 	public void delete() {
 		_section.delete();
-	}
-
-	public boolean isRepeat() {
-		return _is_repeat;
 	}
 }

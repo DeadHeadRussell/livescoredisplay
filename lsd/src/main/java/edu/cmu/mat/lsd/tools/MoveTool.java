@@ -41,8 +41,14 @@ public class MoveTool extends Tool {
 			_last = event.getPoint();
 
 			if (distance.x != 0 || distance.y != 0) {
-				_scoreObject.move(distance,
+				ScoreObject newObject = _scoreObject.move(distance,
 						Tool.GetIntersectedScoreObject(page, event.getPoint()));
+
+				if (newObject != null) {
+					_scoreObject = newObject;
+					_scoreObject.setActive(event.getPoint());
+				}
+
 				return true;
 			}
 		}

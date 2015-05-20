@@ -8,4 +8,6 @@ public abstract class Event implements ScoreObject {
 	};
 
 	public abstract Type getType();
+
+	public abstract boolean isActive();
 }

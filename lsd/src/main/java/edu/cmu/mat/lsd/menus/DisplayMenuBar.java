@@ -191,7 +191,6 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 				try {
 					_model.renameCurrentScore(name);
 				} catch (IOException exception) {
-					// TODO Auto-generated catch block
 					exception.printStackTrace();
 				}
 			}
@@ -211,7 +210,6 @@ public class DisplayMenuBar extends JMenuBar implements ControllerListener {
 				try {
 					_model.addPages(images);
 				} catch (IOException exception) {
-					// TODO Auto-generated catch block
 					exception.printStackTrace();
 				}
 			}

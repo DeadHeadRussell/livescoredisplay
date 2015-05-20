@@ -24,6 +24,7 @@ public class NewBarlineTool extends Tool {
 			_barline.setOffset(event.getX());
 			_barline = new Barline(_system, event.getX());
 			_system.addBarline(_barline);
+			page.getParent().normalize();
 			return true;
 		}
 		return false;

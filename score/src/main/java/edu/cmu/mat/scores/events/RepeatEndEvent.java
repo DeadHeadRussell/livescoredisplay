@@ -3,16 +3,20 @@ package edu.cmu.mat.scores.events;
 import java.awt.Point;
 
 import edu.cmu.mat.scores.Barline;
+import edu.cmu.mat.scores.Repeat;
 import edu.cmu.mat.scores.ScoreObject;
-import edu.cmu.mat.scores.Section;
 
 public class RepeatEndEvent extends Event {
 	private Barline _parent;
-	private Section _section;
-	private RepeatStartEvent _start;
+	private Repeat _repeat;
 
-	public RepeatEndEvent(RepeatStartEvent start) {
-		_start = start;
+	public RepeatEndEvent(Barline parent, Repeat repeat) {
+		_parent = parent;
+		_repeat = repeat;
+	}
+
+	public Repeat getRepeat() {
+		return _repeat;
 	}
 
 	@Override
@@ -20,47 +24,38 @@ public class RepeatEndEvent extends Event {
 		return Event.Type.REPEAT_END;
 	}
 
-	public void move(Point distance, ScoreObject intersect) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void setActive(Point location) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void setInactive() {
-		// TODO Auto-generated method stub
-
-	}
-
-	public ScoreObject getParent() {
-		// TODO Auto-generated method stub
+	public ScoreObject move(Point distance, ScoreObject intersect) {
+		if (intersect != null && intersect.getClass() == Barline.class
+				&& intersect != _parent) {
+			_repeat.move(null, (Barline) intersect);
+			return _repeat.getEndEvent();
+		}
 		return null;
 	}
 
-	public void normalize() {
-		// TODO Auto-generated method stub
+	public void setActive(Point location) {
+		_repeat.setActive(location);
+	}
 
+	public void setInactive() {
+		_repeat.setInactive();
+	}
+
+	public boolean isActive() {
+		return _repeat.isActive();
+	}
+
+	public ScoreObject getParent() {
+		return _parent;
+	}
+
+	public void normalize() {
 	}
 
 	public void deleteChild(ScoreObject child) {
-		// TODO Auto-generated method stub
-
 	}
 
 	public void delete() {
-		// TODO Auto-generated method stub
-
+		_repeat.delete();
 	}
-
-	public int getState() {
-		return 0;
-	}
-
-	public RepeatStartEvent getStart() {
-		return _start;
-	}
-
 }

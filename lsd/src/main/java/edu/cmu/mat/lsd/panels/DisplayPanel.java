@@ -102,6 +102,10 @@ public class DisplayPanel implements Panel, HcmpListener {
 			 * handleNewPosition(0); handleNewTime(TimeMap.Create(new
 			 * Date().getTime(), 0, 0.004)); handlePlay();
 			 */
+			handleNewArrangement(new String[] { "D", "C", "B", "A" });
+			handleNewPosition(0);
+			handleNewTime(TimeMap.Create(new Date().getTime(), 0, 0.004));
+			handlePlay();
 			_scroller.revalidate();
 			_scroller.repaint();
 		} else {
