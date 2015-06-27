@@ -123,4 +123,11 @@ public class XmlParser implements Parser {
 		}
 		return name;
 	}
+
+	@Override
+	public Score parse(String name, File score, List<Image> images, int currentH)
+			throws CompilerException, FileNotFoundException, IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

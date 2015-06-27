@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -15,10 +16,12 @@ import javax.swing.JPanel;
 import javax.swing.border.Border;
 
 import edu.cmu.mat.lsd.Model;
+import edu.cmu.mat.lsd.cache.ImageCache;
 import edu.cmu.mat.lsd.tools.Tool;
 import edu.cmu.mat.scores.Barline;
 import edu.cmu.mat.scores.Image;
 import edu.cmu.mat.scores.Page;
+import edu.cmu.mat.scores.Score;
 import edu.cmu.mat.scores.Section;
 import edu.cmu.mat.scores.System;
 import edu.cmu.mat.scores.events.Event;
@@ -34,7 +37,7 @@ public class JPage extends JPanel {
 			BorderFactory.createRaisedBevelBorder(),
 			BorderFactory.createLoweredBevelBorder());
 
-	private static int IMAGE_HEIGHT = 800;
+	private int IMAGE_HEIGHT;
 
 	private static int BOX_HEIGHT = 16;
 	private static int PAGE_LEFT = 8;
@@ -56,15 +59,32 @@ public class JPage extends JPanel {
 
 	public static FontMetrics FONT_METRICS = null;
 
-	public JPage(Model model, Page page) {
+	public JPage(Model model, Page page, int height) {
 		_model = model;
 		_jpage = this;
 		_page = page;
-
+		IMAGE_HEIGHT = height;
+		
+		ImageCache cache = _model.getImgCache();
+		BufferedImage resized_image = cache.find(page, IMAGE_HEIGHT);
 		Image image = page.getImage();
-		image.resize(IMAGE_HEIGHT, Image.DIMENSION_HEIGHT);
-
-		ImageIcon icon = new ImageIcon(image.getImage());
+		
+		if (resized_image == null) { // XXX check number of pages
+			java.lang.System.out.println("Cache miss");
+			image.resize(IMAGE_HEIGHT, Image.DIMENSION_HEIGHT);
+			resized_image = image.getImage();
+			cache.save(page, resized_image, IMAGE_HEIGHT);
+		}
+		else {
+			//java.lang.System.out.println("In cache");
+			image.setResizedImage(resized_image);
+		}
+		
+//		if (IMAGE_HEIGHT != _page.getParent().getCurrentHeight()) {
+//			_page.getParent().resetComponents(IMAGE_HEIGHT);			
+//		}
+		//java.lang.System.out.format("height: %d\n", resized_image.getHeight());
+		ImageIcon icon = new ImageIcon(resized_image);
 		JLabel imageLabel = new JLabel("", icon, JLabel.CENTER);
 		imageLabel.setBorder(PAGE_BORDER);
 
@@ -73,6 +93,8 @@ public class JPage extends JPanel {
 		add(imageLabel);
 	}
 
+
+	
 	@Override
 	public void paint(Graphics graphics) {
 		super.paint(graphics);

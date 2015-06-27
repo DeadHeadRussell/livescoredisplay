@@ -15,9 +15,10 @@ public class JBlock extends JPanel implements ImageObserver{
 	private Block _block;
 	private Image _image;
 	private static int _width;
-	private static int _height = 350;
+	private static int _height;
 
-	public JBlock() {
+	public JBlock(int blockHeight) {
+		_height = blockHeight;
 		setBackground(Color.WHITE);
 	}
 	

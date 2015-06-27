@@ -1,5 +1,9 @@
 package edu.cmu.mat.lsd;
 
+import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
@@ -18,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
+import edu.cmu.mat.lsd.cache.ImageCache;
 import edu.cmu.mat.lsd.hcmp.HcmpClient;
 import edu.cmu.mat.lsd.menus.listeners.DisplayMenuListener;
 import edu.cmu.mat.lsd.tools.DeleteTool;
@@ -38,6 +43,7 @@ public class Model implements DisplayMenuListener {
 
 	private File _library;
 	private File _init_file;
+	private ImageCache _img_cache;
 
 	@Expose
 	private int _windowX = 0;
@@ -47,7 +53,11 @@ public class Model implements DisplayMenuListener {
 	private int _windowWidth = 0;
 	@Expose
 	private int _windowHeight = 0;
-
+	
+	private int _usableHeight = 
+			(int)GraphicsEnvironment.getLocalGraphicsEnvironment()
+			.getMaximumWindowBounds().getHeight();
+	
 	private List<Score> _scores = new ArrayList<Score>();
 	private int _currentScore = -1;
 
@@ -56,6 +66,7 @@ public class Model implements DisplayMenuListener {
 
 	@Expose
 	private int _currentView = VIEW_NOTATION;
+	
 
 	private Tool _currentTool = null;
 
@@ -75,6 +86,10 @@ public class Model implements DisplayMenuListener {
 	public final static int VIEW_DISPLAY = 1;
 
 	public Model(Controller controller) {
+		Rectangle rect = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+		
+		_usableHeight = (int)rect.getHeight();
+		
 		_controller = controller;
 		_gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation()
 				.create();
@@ -110,7 +125,13 @@ public class Model implements DisplayMenuListener {
 	public int getWindowHeight() {
 		return _windowHeight;
 	}
+	
 
+	public int getUsableHeight() {
+		System.out.format("(%d)\n", _usableHeight);
+		return _usableHeight;
+	}
+	
 	public List<Score> getScoreList() {
 		return _scores;
 	}
@@ -134,6 +155,10 @@ public class Model implements DisplayMenuListener {
 	public Tool getCurrentTool() {
 		return _currentTool;
 	}
+	
+	public ImageCache getImgCache() {
+		return _img_cache;
+	}
 
 	public void setWindowX(int windowX) {
 		_windowX = windowX;
@@ -150,6 +175,7 @@ public class Model implements DisplayMenuListener {
 	public void setWindowHeight(int windowHeight) {
 		_windowHeight = windowHeight;
 	}
+	
 
 	public void setCurrentScore(String currentScoreName) {
 		_currentScoreName = currentScoreName;
@@ -186,7 +212,8 @@ public class Model implements DisplayMenuListener {
 				File to = new File(imgDir + File.separator + file.getName());
 				Files.copy(file.toPath(), to.toPath());	
 			}
-			onSetPath(_library);
+			loadScores();
+			//onSetPath(_library);
 			
 			setCurrentScore(score_name);
 			
@@ -212,6 +239,7 @@ public class Model implements DisplayMenuListener {
 		prefs.node("edu.cmu.mat.lsd").put("library", path.getAbsolutePath());
 
 		_library = path;
+		_img_cache = new ImageCache(_library);
 		_init_file = new File(_library.getAbsolutePath() + File.separator
 				+ "init.json");
 		load();
@@ -292,7 +320,7 @@ public class Model implements DisplayMenuListener {
 
 		for (File score : scores) {
 			try {
-				Score newScore = Score.fromDirectory(score);
+				Score newScore = Score.fromDirectory(score, _usableHeight - 105);
 				if (newScore.getName().equals(_currentScoreName)) {
 					_currentScore = _scores.size();
 				}

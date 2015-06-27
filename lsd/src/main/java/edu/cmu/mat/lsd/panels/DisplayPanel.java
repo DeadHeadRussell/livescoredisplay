@@ -1,19 +1,28 @@
 package edu.cmu.mat.lsd.panels;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JToolBar;
 import javax.swing.Timer;
+import javax.swing.plaf.basic.BasicToolBarUI;
 
 import edu.cmu.mat.lsd.Model;
 import edu.cmu.mat.lsd.components.JArrow;
@@ -36,11 +45,17 @@ public class DisplayPanel implements Panel, HcmpListener {
 	private JPanel _centering = new JPanel();
 	private JPanel _margin = new JPanel();
 	private JLayeredPane _layers = new JLayeredPane();
-	private JBlock _upper_block = new JBlock();
-	private JBlock _lower_block = new JBlock();
+	private JBlock _upper_block;
+	private JBlock _lower_block;
 	private JCursor _cursor;
 	private JArrow _arrow;
 	private boolean _is_arrow_visible = false;
+	
+	private JToolBar _toolbar = new JToolBar("DisplayTools");
+	private final JButton _play_button = new JButton("Play");
+	private final JButton _stop_button = new JButton("Stop");
+	private final JButton _magnify_button = new JButton("+");
+	private final JButton _reduce_button = new JButton("-");
 
 	//List<JSection> _jsections;
 	private List<Block> _blocks;
@@ -55,16 +70,23 @@ public class DisplayPanel implements Panel, HcmpListener {
 	//private int _current_jsection_index = -1;
 	private int _current_block_index = 0;
 	private static final int PAGE_LEFT = 8;
+	private int _panelHeight;
 
-	public DisplayPanel(Model model) {
+	public DisplayPanel(Model model, int panelHeight) {
 		_model = model;
+		_panelHeight = panelHeight;
 		_model.getHcmp().setListener(this);
 		_score = _model.getCurrentScore();
+		
+		int blockHeight = (_panelHeight - 20) / 2;
+		java.lang.System.out.format("Jblock Height: %d", blockHeight);
+		_upper_block = new JBlock(blockHeight);
+		_lower_block = new JBlock(blockHeight);
 
 		_panel.setLayout(new BoxLayout(_panel, BoxLayout.Y_AXIS));
 		_layers.add(_panel, -1);
 		_panel.setLocation(0, 0);
-
+		
 		_arrow = new JArrow(_panel);
 		_arrow.setOpaque(false);
 		_arrow.setVisible(_is_arrow_visible);
@@ -75,10 +97,77 @@ public class DisplayPanel implements Panel, HcmpListener {
 		_layers.add(_cursor, 0);
 
 		
-		_scroller = new JScrollPane(_centering);
-		_centering.setLayout(new GridBagLayout());
+		_stop_button.setEnabled(false);
+		
+		_play_button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				handleNewTime(TimeMap.Create(new Date().getTime(), 0, 0.004));
+				start();
+				_play_button.setEnabled(false);
+				_stop_button.setEnabled(true);
+				_magnify_button.setEnabled(false);
+				_reduce_button.setEnabled(false);
+			}
+		});
+		
+		_stop_button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				handleStop();
+				onUpdateView();
+				_stop_button.setEnabled(false);
+				_play_button.setEnabled(true);
+				_magnify_button.setEnabled(true);
+				_reduce_button.setEnabled(true);
+			}
+		});
+		
+		_magnify_button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				_score.magnify();
+				onUpdateView();
+			}
+		});
+		
+		_reduce_button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				_score.reduce();
+				onUpdateView();
+			}
+		});
+		
+		//_toolbar.setBackground(new Color(220, 220, 220));
+		//_toolbar.setBounds(0, 0, 200, 50);
+		_toolbar.add(_play_button);
+		_toolbar.add(_stop_button);
+		
+		_toolbar.addSeparator();
+		_toolbar.add(_magnify_button);
+		_toolbar.add(_reduce_button);
+		
+		_toolbar.setVisible(true);
+
+		JPanel _envelop = new JPanel(new BorderLayout());
+		
+		_scroller = new JScrollPane(_envelop);
+	    _centering.setLayout(new GridBagLayout());
+//		GridBagConstraints c = new GridBagConstraints();
+//		c.fill = GridBagConstraints.HORIZONTAL;
+//		c.gridx = 0;
+//		c.gridy = 0;
+//		_centering.add(_toolbar, c);
+//		c.gridy = 1;
+		//_layers.add(_toolbar, 0);
+	    
+	    
+	    
+		//_centering.add(_toolbar);
 		_centering.add(_layers);
+		
+		_envelop.add(_toolbar, BorderLayout.PAGE_START);
+		_envelop.add(_centering, BorderLayout.CENTER);
 		_layers.setVisible(true);
+		
+		
 		
 		onUpdateView();
 	}
@@ -99,12 +188,12 @@ public class DisplayPanel implements Panel, HcmpListener {
 	public void onUpdateView() {
 		if (_model.getCurrentView() == Model.VIEW_DISPLAY) {
 			 String[] annie = new String[] {"A,0,36","A,0,36","B,36,48","B,36,48","A,0,36"};
-			 String[] boy = new String[] {"A,0,20","A,0,20","B,20,32","C,52,16","D,68,8","D,68,8","F,76,16"};
+			 String[] boy = new String[] {"A,0,20","A,0,20","B,20,32","C,52,16","D,68,8","D,68,8","E,76,16"};
 			 String[] wings = new String[] {"A,0,16","B,16,32","B,16,32","C,48,60","D,108,148"};
-			 handleNewArrangement(wings);
+			 handleNewArrangement(boy);
 			 handleNewPosition(0); 
-			 handleNewTime(TimeMap.Create(new Date().getTime(), 0, 0.004)); 
-			 handlePlay();
+//			 handleNewTime(TimeMap.Create(new Date().getTime(), 0, 0.004)); 
+//			 handlePlay();
 			 
 			_scroller.revalidate();
 			_scroller.repaint();
@@ -164,7 +253,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 		}
 
 		_playback_events = new_events;
-		_blocks = _model.getCurrentScore().createBlockList(_playback_events);
+		_blocks = _model.getCurrentScore().createBlockList(_playback_events, _upper_block.getHeight());
 		_current_block_index = 0;
 		_is_arrow_visible = false;
 		
@@ -256,6 +345,8 @@ public class DisplayPanel implements Panel, HcmpListener {
 		}
 		moveCursor();
 	}
+	
+	
 
 	private void updateBlock() {
 		Block current_block = _blocks.get(_current_block_index);
@@ -387,7 +478,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 			int y = end_block.getYOffset(end_bar.getParent())
 					+ getJBlock(true).getY();
 
-			_cursor.setPosition(x, y);
+			_cursor.setPosition(x, y-5); // y-5: keep cursor inside block
 			
 		}
 		else {
@@ -400,7 +491,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 			int y = current_block.getYOffset(current_bar.getParent())
 					+ getJBlock(true).getY();
 	
-			_cursor.setPosition(x, y);
+			_cursor.setPosition(x, y-5); // y-5: keep cursor inside block
 			
 			
 		}

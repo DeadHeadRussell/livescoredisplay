@@ -43,6 +43,7 @@ public class MoveTool extends Tool {
 			if (distance.x != 0 || distance.y != 0) {
 				_scoreObject.move(distance,
 						Tool.GetIntersectedScoreObject(page, event.getPoint()));
+				//_scoreObject.moveTo(current);
 				return true;
 			}
 		}

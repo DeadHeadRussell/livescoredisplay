@@ -10,6 +10,6 @@ import edu.cmu.mat.scores.Image;
 import edu.cmu.mat.scores.Score;
 
 public interface Parser {
-	public Score parse(String name, File score, List<Image> images)
+	public Score parse(String name, File score, List<Image> images, int currentH)
 			throws CompilerException, FileNotFoundException, IOException;
 }

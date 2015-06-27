@@ -1,6 +1,10 @@
 package edu.cmu.mat.lsd.frames;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowEvent;
@@ -29,8 +33,18 @@ public class Window implements ControllerListener {
 	private Toolbar _toolbar = null;
 	private JFrame _frame = new JFrame();
 	private int _previous_view = -1;
+//	private int _screenWidth;
+//	private int _screenHeight;
 
 	public Window(Model model, Controller controller) {
+		
+		
+//		Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+//		_screenWidth = (int) d.getWidth();
+//		_screenHeight = (int) d.getHeight();
+		
+		int usableHeight = model.getUsableHeight() ;
+		
 		_model = model;
 		_controller = controller;
 		_controller.addListener(this);
@@ -39,11 +53,12 @@ public class Window implements ControllerListener {
 		_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		DisplayMenuBar menu = new DisplayMenuBar(model);
+		System.out.format("%d\n", (int) menu.getPreferredSize().getHeight());
 		_controller.addListener(menu);
 		_frame.setJMenuBar(menu);
 
-		_notation = new NotationPanel(model);
-		_display = new DisplayPanel(model);
+		_notation = new NotationPanel(model, usableHeight - 105);
+		_display = new DisplayPanel(model, usableHeight - 75);
 		_controller.addListener(_notation);
 		_controller.addListener(_display);
 

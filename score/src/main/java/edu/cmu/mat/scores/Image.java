@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Image {
 	private BufferedImage _originalImage;
-	private java.awt.Image _resizedImage;
+	private BufferedImage _resizedImage;
 
 	public static int DIMENSION_WIDTH = 0;
 	public static int DIMENSION_HEIGHT = 1;
@@ -44,23 +44,27 @@ public class Image {
 			width = (int) (_originalImage.getWidth() * factor);
 		}
 
-		_resizedImage = _originalImage.getScaledInstance(width, height,
+		java.awt.Image resizedImage = _originalImage.getScaledInstance(width, height,
 				BufferedImage.SCALE_SMOOTH);
 
 		BufferedImage coloured = new BufferedImage(width, height,
 				BufferedImage.TYPE_INT_ARGB);
 		coloured.getGraphics().setColor(Color.WHITE);
 		coloured.getGraphics().fillRect(0, 0, width, height);
-		coloured.getGraphics().drawImage(_resizedImage, 0, 0, width, height, 0,
+		coloured.getGraphics().drawImage(resizedImage, 0, 0, width, height, 0,
 				0, width, height, null);
 
 		_resizedImage = coloured;
 	}
 
-	public java.awt.Image getImage() {
+	public BufferedImage getImage() {
 		return _resizedImage;
 	}
-
+	
+	public void setResizedImage(BufferedImage resizedImage) {
+		_resizedImage = resizedImage;
+	}
+	
 	public java.awt.Image crop(int top, int bottom) {
 		int width = _resizedImage.getWidth(null);
 		int height = _resizedImage.getHeight(null);

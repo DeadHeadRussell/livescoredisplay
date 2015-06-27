@@ -72,4 +72,5 @@ public class SectionStartEvent extends Event {
 	public boolean isRepeat() {
 		return _is_repeat;
 	}
+
 }

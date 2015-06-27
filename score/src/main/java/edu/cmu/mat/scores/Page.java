@@ -58,7 +58,7 @@ public class Page implements ScoreObject {
 			}
 		});
 	}
-
+	
 	public Image getImage() {
 		return _image;
 	}
@@ -90,4 +90,5 @@ public class Page implements ScoreObject {
 	public void setInactive() {
 		// Does nothing.
 	}
+
 }

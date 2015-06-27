@@ -71,4 +71,5 @@ public class SectionEndEvent extends Event {
 	public boolean isRepeat() {
 		return _is_repeat;
 	}
+
 }

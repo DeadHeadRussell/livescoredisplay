@@ -11,13 +11,15 @@ import edu.cmu.mat.scores.Score;
 
 public class NotationPanel implements Panel {
 	private Model _model;
-
+	private int _panelHeight;  // without tool bar and menu mar
 	private JScrollPane _scroller;
 	private JPanel _panel = new JPanel();
 
-	public NotationPanel(Model model) {
+	public NotationPanel(Model model, int panelHeight) {
 		_model = model;
-		_scroller = new JScrollPane(_panel);
+		_panelHeight = panelHeight;
+		_scroller = new JScrollPane(_panel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		_scroller.getHorizontalScrollBar().setUnitIncrement(16);
 		onUpdateScore();
 	}
 
@@ -35,11 +37,11 @@ public class NotationPanel implements Panel {
 		if (score == null) {
 			return;
 		}
-
+		
 		for (Page page : score.getPages()) {
-			_panel.add(new JPage(_model, page));
+			_panel.add(new JPage(_model, page, _panelHeight));
 		}
-
+		_scroller.revalidate();
 		_scroller.repaint();
 	}
 

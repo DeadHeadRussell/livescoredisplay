@@ -12,10 +12,12 @@ public class Barline implements ScoreObject {
 	private System _parent;
 	private int _state = NOT_ACTIVE;
 	@Expose
-	private int _offset;
+	private double _offset;
 	@Expose
 	private List<Event> _events;
 
+	private int _currH, _origH, _origW;
+	
 	public static final int NOT_ACTIVE = 0;
 	public static final int ACTIVE = 1;
 
@@ -24,17 +26,32 @@ public class Barline implements ScoreObject {
 	}
 
 	public Barline(System parent, int offset, List<Event> events) {
+		_currH = parent.getParent().getParent().getCurrentHeight();
+		_origH = parent.getParent().getParent().getOriginalHeight();
+		_origW = parent.getParent().getImage().getImage().getWidth();
+		
 		_parent = parent;
-		_offset = offset;
+		_offset = ((double) offset) * _origH / _currH;
 		_events = events;
 	}
 
 	public Barline(System parent, Barline other, Score score) {
-		this(parent, other.getOffset());
+		//this(parent, other.getOffset());
+		_currH = parent.getParent().getParent().getCurrentHeight();
+		_origH = parent.getParent().getParent().getOriginalHeight();
+		_origW = parent.getParent().getImage().getImage().getWidth();
+		
+		_parent = parent;
+		_offset = other.getAbsoluteOffset();
+		_events = new LinkedList<Event>();
 	}
 
+	public void setCurrentHeight(int height) {
+		_currH = height;
+	}
+	
 	public void setOffset(int offset) {
-		_offset = offset;
+		_offset = ((double) offset) * _origH / _currH;
 	}
 
 	public void setState(int state) {
@@ -46,8 +63,12 @@ public class Barline implements ScoreObject {
 	}
 
 	public void move(Point distance, ScoreObject intersect) {
-		_offset += distance.x;
+		_offset += ((double) distance.x) * _origH / _currH;
+		
+		if (_offset < 0) _offset = 0.0;
+		else if (_offset > _origW) _offset = (double)_origW;
 	}
+	
 
 	public void setActive(Point location) {
 		setState(ACTIVE);
@@ -68,9 +89,18 @@ public class Barline implements ScoreObject {
 			child.delete();
 		}
 	}
+	
+	public int getAbsoluteOffset() {
+		return (int) _offset;
+	}
 
 	public int getOffset() {
-		return _offset;
+		return (int) offset();
+	}
+	
+	// Calculations are done in double format inside
+	private double offset() {
+		return _offset * _currH / _origH;
 	}
 
 	public int getState() {
@@ -82,7 +112,7 @@ public class Barline implements ScoreObject {
 	}
 
 	public boolean intersects(int x) {
-		return (x >= _offset - 2 && x <= _offset + 2);
+		return (x >= offset() - 2 && x <= offset() + 2);
 	}
 
 	public System getParent() {
@@ -94,10 +124,10 @@ public class Barline implements ScoreObject {
 	}
 
 	public boolean isLeft(int x) {
-		return x > _offset;
+		return x > offset();
 	}
 
 	public boolean isRight(int x) {
-		return x < _offset;
+		return x < offset();
 	}
 }

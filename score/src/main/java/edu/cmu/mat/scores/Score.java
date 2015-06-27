@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+
 import javax.imageio.ImageIO;
 
 import com.google.gson.Gson;
@@ -33,11 +34,18 @@ public class Score implements ScoreObject {
 
 	@Expose
 	private String _name;
+
 	@Expose
 	private List<Section> _sections;
 	@Expose
 	private List<Page> _pages;
-
+	@Expose
+	private int _originalHeight;
+	private int _currentHeight;
+	@Expose
+	private List<Integer> _displayHeights;
+	@Expose
+	private int _displayIndex;
 	@Expose
 	private Arrangement _arrangement = new Arrangement(this);
 
@@ -45,21 +53,42 @@ public class Score implements ScoreObject {
 		_name = name;
 		_sections = sections;
 		_pages = pages;
+		
 	}
 
 	public Score(String name) {
 		this(name, new LinkedList<Section>(), new ArrayList<Page>());
 	}
 
-	public Score(String name, List<Image> images) {
+	public Score(String name, List<Image> images, int currentH) {
 		this(name);
+		//XXX assumes same height for all images of the score
+		_originalHeight = images.get(0).getImage().getHeight();
+		_currentHeight = currentH;
+		_displayHeights = new ArrayList<Integer>();
+		_displayHeights.add(currentH);
+		_displayIndex = 0;
 		for (Image image : images) {
 			addPage(new Page(this, image));
 		}
+		
 	}
-
-	public Score(Score other, List<Image> images) {
+	//XXX Need to tidy up the init functions
+	public Score(Score other, List<Image> images, int currentH) {
 		this(other.getName());
+		_originalHeight = other.getOriginalHeight();
+		//_currentHeight = currentH;
+		_displayHeights = other.getDisplayHeights();
+		if (_displayHeights == null) {
+			_displayHeights = new ArrayList<Integer>();
+			_displayHeights.add(currentH);
+			_displayIndex = 0;
+		}
+		else {
+			_displayIndex = other.getDisplayIndex();
+		}
+		_currentHeight = _displayHeights.get(_displayIndex);
+		
 		for (int i = 0; i < other.getNumberPages(); i++) {
 			addPage(new Page(this, other.getPage(i), images.get(i)));
 		}
@@ -72,7 +101,7 @@ public class Score implements ScoreObject {
 			start.addEvent(new SectionStartEvent(start, new_section));
 			end.addEvent(new SectionEndEvent(end, new_section));
 		}
-
+		
 		// Initializing arrangements has to come after initializing the pages
 		// and sections since arrangements relies on them to already exist.
 		_arrangement = new Arrangement(this, other._arrangement);
@@ -90,6 +119,22 @@ public class Score implements ScoreObject {
 		return _sections.get(index);
 	}
 
+	public int getOriginalHeight() {
+		return _originalHeight;
+	}
+	
+	public int getCurrentHeight() {
+		return _currentHeight;
+	}
+	
+	public List<Integer> getDisplayHeights(){
+		return _displayHeights;
+	}
+	
+	public int getDisplayIndex() {
+		return _displayIndex;
+	}
+	
 	public Section addSection(Barline start, Barline end) {
 		if (start == null || end == null) {
 			return null;
@@ -198,7 +243,7 @@ public class Score implements ScoreObject {
 		}
 	}
 
-	public static Score fromDirectory(File score_directory) throws IOException,
+	public static Score fromDirectory(File score_directory, int currentH) throws IOException,
 			CompilerException {
 		File imagesDir = new File(score_directory.getAbsolutePath()
 				+ File.separator + "images");
@@ -230,7 +275,8 @@ public class Score implements ScoreObject {
 		}
 
 		File init_file = new File(score_directory, "init.json");
-		return PARSER.parse(score_directory.getName(), init_file, images);
+		return PARSER.parse(score_directory.getName(), init_file, images, currentH);
+		// XXX Really need to pass images? if already cached?
 	}
 
 	public ScoreObject getParent() {
@@ -385,8 +431,8 @@ public class Score implements ScoreObject {
 		return null;
 	}
 	
-	private Block createCurrentBlock(List<Block> blocks, System first) {
-		int block_height = 350;
+	private Block createCurrentBlock(List<Block> blocks, System first, int block_height) {
+		//int block_height = 350;
 		
 		List<System> systems = new ArrayList<System>();
 		System previous = null;
@@ -485,13 +531,13 @@ public class Score implements ScoreObject {
 		
 	}
 	
-	public List<Block> createBlockList(List<PlaybackEvent> events) {
+	public List<Block> createBlockList(List<PlaybackEvent> events, int block_height) {
 		List<Block> blocks = new ArrayList<Block>();
 		int event_start_index = 0;
 		PlaybackEvent current_event = events.get(event_start_index);
 		System next_block_start = current_event.getStart().getParent();
 		while (next_block_start != null) {
-			Block block = createCurrentBlock(blocks, next_block_start);
+			Block block = createCurrentBlock(blocks, next_block_start, block_height);
 			blocks.add(block);
 			
 			// propagate event forward until out of block;
@@ -500,18 +546,7 @@ public class Score implements ScoreObject {
 			if (current_event == null) {
 				next_block_start = null;
 			}
-			else {
-				/* Count duration of the block and set start & end event index
-				int duration = 0;
-				block.setStartEventIndex(event_start_index);
-				for (; event_start_index < events.indexOf(current_event); event_start_index++){
-					duration += events.get(event_start_index).getDuration();
-				}
-				block.setEndEventIndex(event_start_index - 1);
-				block.setDuration(duration);
-				*/
-				
-				
+			else {			
 				System event_start = current_event.getStart().getParent();
 				//System event_end = current_event.getEnd().getParent();
 
@@ -523,4 +558,43 @@ public class Score implements ScoreObject {
 		
 		return blocks;
 	}
+
+	public void magnify() {
+//		if (_displayIndex == _displayHeights.size() - 1) {
+//			return;
+//		}
+		
+		updateCurrentHeight((int)(_currentHeight * 1.2));
+		for (Page page : _pages) {
+			Image image = page.getImage();
+			image.resize(_currentHeight, 1);
+		}
+	}
+	
+	public void reduce() {
+//		if (_displayIndex == 0) {
+//			return;
+//		}
+		
+		updateCurrentHeight((int)(_currentHeight / 1.2));
+		for (Page page : _pages) {
+			Image image = page.getImage();
+			image.resize(_currentHeight, 1);
+		}
+	}
+	
+	public void updateCurrentHeight(int height) {
+		_currentHeight = height;
+		for (Page page : _pages) {
+			List<System> systems = page.getSystems();
+			for (System system : systems) {
+				system.setCurrentHeight(height);
+				List<Barline> barlines = system.getBarlines();
+				for (Barline barline : barlines) {
+					barline.setCurrentHeight(height);
+				}
+			}
+		}
+	}
+
 }

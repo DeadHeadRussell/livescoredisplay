@@ -11,13 +11,15 @@ import com.google.gson.annotations.Expose;
 public class System implements ScoreObject {
 	private Page _parent;
 	@Expose
-	private int _top;
+	private double _top; // absolute values with regard to original image
 	@Expose
-	private int _bottom;
+	private double _bottom;
 	private int _state = NONE_ACTIVE;
 	@Expose
 	private List<Barline> _barlines;
 
+	private int _currH, _origH;
+	
 	public static final int NONE_ACTIVE = 0;
 	public static final int TOP_ACTIVE = 1;
 	public static final int BOTTOM_ACTIVE = 2;
@@ -28,31 +30,45 @@ public class System implements ScoreObject {
 	}
 
 	public System(Page parent, int top, int bottom, List<Barline> barlines) {
+		_currH = parent.getParent().getCurrentHeight();
+		_origH = parent.getParent().getOriginalHeight();
+		
 		_parent = parent;
-		_top = top;
-		_bottom = bottom;
+		_top = ((double) top) * _origH / _currH;
+		_bottom = ((double) bottom) * _origH / _currH;
 		_barlines = barlines;
 	}
 
 	public System(Page parent, System other, Score score) {
-		this(parent, other.getTop(), other.getBottom());
-
+		//this(parent, other.getTop(), other.getBottom());
+		_currH = parent.getParent().getCurrentHeight();
+		_origH = parent.getParent().getOriginalHeight();
+		
+		_parent = parent;
+		_top = other.getAbsoluteTop();
+		_bottom = other.getAbsoluteBottom();
+		_barlines = new ArrayList<Barline>();
+		
 		for (Barline barline : other.getBarlines()) {
 			addBarline(new Barline(this, barline, score));
 		}
 	}
+	
+	public void setCurrentHeight(int height) {
+		_currH = height;
+	}
 
 	public void setTop(int top) {
-		_top = top;
-		if (_top + 16 > _bottom) {
-			_bottom = _top + 16;
+		_top = ((double) top) * _origH / _currH;
+		if (top + 16 > getBottom()) {
+			_bottom = ((double) (top + 16)) * _origH / _currH;
 		}
 	}
 
 	public void setBottom(int bottom) {
-		_bottom = bottom;
-		if (_bottom - 16 < _top) {
-			_top = _bottom - 16;
+		_bottom = ((double) bottom) * _origH / _currH;
+		if (bottom - 16 < getTop()) {
+			_top = ((double) (bottom - 16)) * _origH / _currH;
 		}
 	}
 
@@ -62,12 +78,18 @@ public class System implements ScoreObject {
 
 	public void move(Point distance, ScoreObject intersect) {
 		if (_state == BOTTOM_ACTIVE || _state == ALL_ACTIVE) {
-			_bottom += distance.y;
+			_bottom += ((double) distance.y) * _origH / _currH;
 		}
 		if (_state == TOP_ACTIVE || _state == ALL_ACTIVE) {
-			_top += distance.y;
+			_top += ((double) distance.y) * _origH / _currH;
 		}
+		
+		if (_top < 0) setTop(0);
+		else if (_top > _origH ) setTop(_currH - 16);
+		if (_bottom < 0) setBottom(16);
+		else if (_bottom > _origH) setBottom(_currH);
 	}
+
 
 	public void setActive(Point location) {
 		setState(intersectsLine(location.y));
@@ -104,17 +126,33 @@ public class System implements ScoreObject {
 		_barlines.add(barline);
 	}
 
-	public int getTop() {
+	public double getAbsoluteTop() {
 		return _top;
+	}
+	
+	public double getAbsoluteBottom() {
+		return _bottom;
+	}
+	
+	public int getTop() {
+		return (int) top();
+	}
+	
+	private double top() {
+		return _top * _currH / _origH;
 	}
 
 	public int getBottom() {
-		return _bottom;
+		return (int) bottom();
+	}
+	
+	private double bottom() {
+		return _bottom * _currH / _origH;
 	}
 	
 	// Not the real height displayed
 	public int getInnerHeight() {
-		return _bottom - _top;
+		return (int) (bottom() - top());
 	}
 
 	public int getState() {
@@ -126,17 +164,17 @@ public class System implements ScoreObject {
 	}
 
 	public boolean intersects(int y) {
-		return y >= _top && y <= _bottom;
+		return y >= top() && y <= bottom();
 	}
 
 	public int intersectsLine(int y) {
-		if (y >= _top && y <= _top + 16) {
+		if (y >= top() && y <= top() + 16) {
 			return TOP_ACTIVE;
 		}
-		if (y >= _bottom - 3 && y <= _bottom + 3) {
+		if (y >= bottom() - 3 && y <= bottom() + 3) {
 			return BOTTOM_ACTIVE;
 		}
-		if (y > _top + 16 && y < _bottom - 3) {
+		if (y > top() + 16 && y < bottom() - 3) {
 			return ALL_ACTIVE;
 		}
 		return NONE_ACTIVE;
