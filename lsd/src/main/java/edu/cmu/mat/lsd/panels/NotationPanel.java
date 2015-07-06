@@ -41,6 +41,7 @@ public class NotationPanel implements Panel {
 		for (Page page : score.getPages()) {
 			_panel.add(new JPage(_model, page, _panelHeight));
 		}
+		
 		_scroller.revalidate();
 		_scroller.repaint();
 	}
@@ -50,6 +51,7 @@ public class NotationPanel implements Panel {
 
 	public void onUpdateView() {
 		if (_model.getCurrentView() == Model.VIEW_NOTATION) {
+			_model.getCurrentScore().updateCurrentHeight(_panelHeight);
 			_scroller.revalidate();
 			_scroller.repaint();
 		}

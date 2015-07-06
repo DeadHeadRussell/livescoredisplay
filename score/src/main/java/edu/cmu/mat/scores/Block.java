@@ -16,7 +16,8 @@ public class Block {
 	
 	//private int _duration;
 	
-	private boolean _has_flipped_next_block = false;
+	private boolean _is_flipped = false;
+	
 	
 	private java.awt.Image _image;
 	
@@ -26,7 +27,7 @@ public class Block {
 			_start_system = systems.get(0);
 			_end_system = systems.get(systems.size()-1);
 		}
-		_image = makeImage();
+		//makeImage(); //Only make image when necessary
 	}
 	
 	public void addJump(Barline from, Barline to) {
@@ -56,38 +57,13 @@ public class Block {
 			_jump_index += 2;
 		}
 	}
-	/*
-	public void setDuration(int duration) {
-		_duration = duration;
+	
+	public void flipToNextBlock() {
+		_is_flipped = true;
 	}
 	
-	public int getDuration() {
-		return _duration;
-	}
-	
-	public void setStartEventIndex(int i) {
-		_start_event_i = i;
-	}
-	
-	public void setEndEventIndex(int i) {
-		_end_event_i = i;
-	}
-	
-	public int getStartEventIndex() {
-		return _start_event_i;
-	}
-	
-	public int getEndEventIndex() {
-		return _end_event_i;
-	}
-	*/
-	
-	public void flippedNextBlock() {
-		_has_flipped_next_block = true;
-	}
-	
-	public boolean hasFlippedNextBlock() {
-		return _has_flipped_next_block;
+	public boolean isBlockFlipped() {
+		return _is_flipped;
 	}
 	
 	public int getYOffset(System current) {
@@ -112,15 +88,16 @@ public class Block {
 		return offset;
 	}
 	
-	private java.awt.Image makeImage() {
+	public void makeImage(int currentHeight) {
 		Page start_page = _start_system.getParent();
 		Page end_page = _end_system.getParent();
 
 		int top = _start_system.getTop();
 		int bottom = _end_system.getBottom();
-
+		
 		if (start_page == end_page) {
-			return start_page.getImage().crop(top, bottom);
+			start_page.getImage().resize(currentHeight, 1);
+			_image = start_page.getImage().crop(top, bottom);
 		} else {
 			Score score = start_page.getParent();
 			List<Page> pages = score.getPages();
@@ -128,12 +105,14 @@ public class Block {
 			int end_index = pages.indexOf(end_page);
 
 			List<Page> sectionPages = pages.subList(start_index, end_index + 1);
-			return Image.MERGE(sectionPages, top, bottom);
+			for (Page page: sectionPages) {
+				page.getImage().resize(currentHeight, 1);
+			}
+			_image = Image.MERGE(sectionPages, top, bottom);
 		}
 	}
 
-	public java.awt.Image getImage() {
-		
+	public java.awt.Image getImage() {		
 		return _image;
 	}
 	

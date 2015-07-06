@@ -35,10 +35,18 @@ public class Image {
 		double factor;
 
 		if (dimension == DIMENSION_WIDTH) {
+			if (size == _resizedImage.getWidth()) {
+				return;
+			}
+			
 			width = size;
 			factor = width / ((double) _originalImage.getWidth());
 			height = (int) (_originalImage.getHeight() * factor);
 		} else {
+			if (size == _resizedImage.getHeight()) {
+				//java.lang.System.out.println("Same height!");
+				return;
+			}
 			height = size;
 			factor = height / ((double) _originalImage.getHeight());
 			width = (int) (_originalImage.getWidth() * factor);

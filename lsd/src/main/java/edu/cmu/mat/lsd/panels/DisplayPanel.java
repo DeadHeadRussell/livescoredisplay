@@ -57,7 +57,6 @@ public class DisplayPanel implements Panel, HcmpListener {
 	private final JButton _magnify_button = new JButton("+");
 	private final JButton _reduce_button = new JButton("-");
 
-	//List<JSection> _jsections;
 	private List<Block> _blocks;
 	private Barline _previous_jump_to = null;
 
@@ -67,7 +66,6 @@ public class DisplayPanel implements Panel, HcmpListener {
 	private int _playback_id = 0;
 	private List<PlaybackEvent> _playback_events = new ArrayList<PlaybackEvent>();
 	private int _events_index = 0;
-	//private int _current_jsection_index = -1;
 	private int _current_block_index = 0;
 	private static final int PAGE_LEFT = 8;
 	private int _panelHeight;
@@ -79,9 +77,11 @@ public class DisplayPanel implements Panel, HcmpListener {
 		_score = _model.getCurrentScore();
 		
 		int blockHeight = (_panelHeight - 20) / 2;
-		java.lang.System.out.format("Jblock Height: %d", blockHeight);
+		//java.lang.System.out.format("Jblock Height: %d", blockHeight);
 		_upper_block = new JBlock(blockHeight);
 		_lower_block = new JBlock(blockHeight);
+		
+		_score.addAllHeights(blockHeight); // instantiate the list of heights
 
 		_panel.setLayout(new BoxLayout(_panel, BoxLayout.Y_AXIS));
 		_layers.add(_panel, -1);
@@ -105,8 +105,6 @@ public class DisplayPanel implements Panel, HcmpListener {
 				start();
 				_play_button.setEnabled(false);
 				_stop_button.setEnabled(true);
-				_magnify_button.setEnabled(false);
-				_reduce_button.setEnabled(false);
 			}
 		});
 		
@@ -116,27 +114,25 @@ public class DisplayPanel implements Panel, HcmpListener {
 				onUpdateView();
 				_stop_button.setEnabled(false);
 				_play_button.setEnabled(true);
-				_magnify_button.setEnabled(true);
-				_reduce_button.setEnabled(true);
 			}
 		});
 		
 		_magnify_button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
-				_score.magnify();
-				onUpdateView();
+				if (_score.magnify()) {
+					onUpdateSize();
+				}
 			}
 		});
 		
 		_reduce_button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
-				_score.reduce();
-				onUpdateView();
+				if (_score.reduce()) {
+					onUpdateSize();
+				}
 			}
 		});
 		
-		//_toolbar.setBackground(new Color(220, 220, 220));
-		//_toolbar.setBounds(0, 0, 200, 50);
 		_toolbar.add(_play_button);
 		_toolbar.add(_stop_button);
 		
@@ -150,17 +146,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 		
 		_scroller = new JScrollPane(_envelop);
 	    _centering.setLayout(new GridBagLayout());
-//		GridBagConstraints c = new GridBagConstraints();
-//		c.fill = GridBagConstraints.HORIZONTAL;
-//		c.gridx = 0;
-//		c.gridy = 0;
-//		_centering.add(_toolbar, c);
-//		c.gridy = 1;
-		//_layers.add(_toolbar, 0);
-	    
-	    
-	    
-		//_centering.add(_toolbar);
+//		
 		_centering.add(_layers);
 		
 		_envelop.add(_toolbar, BorderLayout.PAGE_START);
@@ -187,6 +173,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	public void onUpdateView() {
 		if (_model.getCurrentView() == Model.VIEW_DISPLAY) {
+			 _score.updateCurrentHeight();
 			 String[] annie = new String[] {"A,0,36","A,0,36","B,36,48","B,36,48","A,0,36"};
 			 String[] boy = new String[] {"A,0,20","A,0,20","B,20,32","C,52,16","D,68,8","D,68,8","E,76,16"};
 			 String[] wings = new String[] {"A,0,16","B,16,32","B,16,32","C,48,60","D,108,148"};
@@ -200,6 +187,32 @@ public class DisplayPanel implements Panel, HcmpListener {
 		} else {
 			handleStop();
 		}
+	}
+	
+	public void onUpdateSize() {
+		_blocks = _score.createBlockList(_playback_events, _upper_block.getHeight());
+		_current_block_index = getCurrentBlockIndex();
+		
+		_is_arrow_visible = false;
+		
+		initializeBlocks(_current_block_index);
+		
+		// If only one block left to be displayed, remove the lower block;
+		if (_current_block_index >= _blocks.size() - 1) {
+			_panel.remove(_lower_block);
+		}
+		
+		int width = _blocks.get(_current_block_index).getWidth();
+		int height = _layers.getHeight();
+		
+		_layers.setPreferredSize(new Dimension(width, height));
+		_panel.setSize(_layers.getPreferredSize());
+
+		_cursor.setSize(_layers.getPreferredSize());
+		moveCursor();
+		_arrow.setSize(_layers.getPreferredSize());
+		_arrow.setVisible(_is_arrow_visible);
+		redraw();
 	}
 
 	public void onProgramQuit() {
@@ -244,7 +257,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 	@Override
 	public Boolean handleNewArrangement(String[] arrangement_string) {
-		List<PlaybackEvent> new_events = _model.getCurrentScore()
+		List<PlaybackEvent> new_events = _score
 				.createPlaybackEvents(arrangement_string);
 
 		if (new_events == null) {
@@ -253,49 +266,57 @@ public class DisplayPanel implements Panel, HcmpListener {
 		}
 
 		_playback_events = new_events;
-		_blocks = _model.getCurrentScore().createBlockList(_playback_events, _upper_block.getHeight());
+		_blocks = _score.createBlockList(_playback_events, _upper_block.getHeight());
 		_current_block_index = 0;
 		_is_arrow_visible = false;
 		
 		_panel.removeAll();
 
-		int width = 0;
-		int height = 0;
+		initializeBlocks(0);
+		
+		int width = _blocks.get(0).getWidth();
+		int height = _upper_block.getHeight() + _lower_block.getHeight() + 10;
 		
 		
-		for (Block block : _blocks) {
-			width = Math.max(width, block.getWidth());
-		}
+		JPanel margin = new JPanel();
+		_margin.setPreferredSize(new Dimension(width, 10));
 		
-		_upper_block.setBlock(_blocks.get(0));
-		if (_blocks.size() > 1) {
-			_lower_block.setBlock(_blocks.get(1));
-			height = _upper_block.getHeight() + _lower_block.getHeight() + 10;
-			JPanel margin = new JPanel();
-			_margin.setPreferredSize(new Dimension(width, 10));
-			
-			_panel.add(_upper_block);
-			_panel.add(margin);
-			_panel.add(_lower_block);
-		}
-		else {
-			height = _upper_block.getHeight();
-			_panel.add(_upper_block);
-		}
+		_panel.add(_upper_block);
+		_panel.add(margin);
+		if (_blocks.size() > 1) _panel.add(_lower_block);
+		
+		
 
 		_layers.setPreferredSize(new Dimension(width, height));
 		_panel.setSize(_layers.getPreferredSize());
 
 		_cursor.setSize(_layers.getPreferredSize());
-		
+		moveCursor();
 		_arrow.setSize(_layers.getPreferredSize());
-
+		_arrow.setVisible(_is_arrow_visible);
 		redraw();
 
 		if (_play_timer != null) {
 			restart();
 		}
 		return true;
+	}
+	
+	private void initializeBlocks(int index) {
+		Block curr = _blocks.get(index);
+		curr.makeImage(_score.getCurrentHeight());
+		
+		if (index % 2 == 0) _upper_block.setBlock(curr);
+		else _lower_block.setBlock(curr);
+			
+		if (_blocks.size() > index + 1) {
+			Block next = _blocks.get(index + 1);
+			next.makeImage(_score.getCurrentHeight());
+			if (index % 2 == 0) _lower_block.setBlock(next);
+			else _upper_block.setBlock(next);
+		}
+		
+		
 	}
 	
 
@@ -317,10 +338,10 @@ public class DisplayPanel implements Panel, HcmpListener {
 		_play_timer = new Timer((int) delay, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				updateBlock();
+				if (_events_index < _playback_events.size()) updateBlock();
 				drawArrow();
 				moveCursor();
-				if (_events_index <= _playback_events.size()) {
+				if (_events_index < _playback_events.size()) {
 					fireNextEvent(id);
 				} 
 			}
@@ -343,10 +364,19 @@ public class DisplayPanel implements Panel, HcmpListener {
 				break;
 			}
 		}
-		moveCursor();
+		//moveCursor();
 	}
 	
-	
+	private int getCurrentBlockIndex(){
+		for (int blockIndex = 0; blockIndex < _blocks.size(); blockIndex ++) {
+			Block current = _blocks.get(blockIndex);
+			if (! _score.outOfBlock(current, _playback_events.get(_events_index).getStart())) {
+				return blockIndex;
+			}
+		}
+		java.lang.System.err.print("Error! Unable to find current block after resizing\n");
+		return -1;
+	}
 
 	private void updateBlock() {
 		Block current_block = _blocks.get(_current_block_index);
@@ -359,17 +389,19 @@ public class DisplayPanel implements Panel, HcmpListener {
 			}
 		}
 		current_block = _blocks.get(_current_block_index);
-		if (!current_block.hasFlippedNextBlock()) {
+		if (!current_block.isBlockFlipped()) {
 			if (_current_block_index < _blocks.size() - 1) {
 				Block next_block = _blocks.get(_current_block_index + 1);
-				
+				next_block.makeImage(_score.getCurrentHeight());
 				if (_current_block_index % 2 == 0) _lower_block.setBlock(next_block);
 				else _upper_block.setBlock(next_block);
 				
-				current_block.flippedNextBlock();
+				current_block.flipToNextBlock();
 			}
-			else current_block.flippedNextBlock();
+			else current_block.flipToNextBlock();
 		}
+		
+		
 		
 		
 		redraw();

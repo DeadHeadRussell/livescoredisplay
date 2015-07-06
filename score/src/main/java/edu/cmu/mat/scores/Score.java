@@ -42,9 +42,9 @@ public class Score implements ScoreObject {
 	@Expose
 	private int _originalHeight;
 	private int _currentHeight;
-	@Expose
+	//@Expose
 	private List<Integer> _displayHeights;
-	@Expose
+	//@Expose
 	private int _displayIndex;
 	@Expose
 	private Arrangement _arrangement = new Arrangement(this);
@@ -78,15 +78,16 @@ public class Score implements ScoreObject {
 		this(other.getName());
 		_originalHeight = other.getOriginalHeight();
 		//_currentHeight = currentH;
-		_displayHeights = other.getDisplayHeights();
-		if (_displayHeights == null) {
-			_displayHeights = new ArrayList<Integer>();
-			_displayHeights.add(currentH);
-			_displayIndex = 0;
-		}
-		else {
-			_displayIndex = other.getDisplayIndex();
-		}
+		//_displayHeights = other.getDisplayHeights();
+		//if (_displayHeights == null) {
+		_displayHeights = new ArrayList<Integer>();
+		_displayHeights.add(currentH);
+		_displayIndex = 0;
+		//}
+//		else {
+//			//_displayIndex = other.getDisplayIndex();
+//			_displayIndex = 0; // for demo
+//		}
 		_currentHeight = _displayHeights.get(_displayIndex);
 		
 		for (int i = 0; i < other.getNumberPages(); i++) {
@@ -105,6 +106,22 @@ public class Score implements ScoreObject {
 		// Initializing arrangements has to come after initializing the pages
 		// and sections since arrangements relies on them to already exist.
 		_arrangement = new Arrangement(this, other._arrangement);
+	}
+	
+	public void addAllHeights(int blockHeight) {
+		int maxH = 0;
+		for (Page page: _pages) {
+			for (System system: page.getSystems()) {
+				if (system.getInnerHeight() > maxH)
+					maxH = system.getInnerHeight();
+			}
+		}
+		int currH = _displayHeights.get(0);
+		while (maxH * 1.2 < blockHeight) {
+			maxH = (int) (maxH * 1.2);
+			currH = (int) (currH * 1.2);
+			_displayHeights.add(currH);
+		}
 	}
 
 	public String getName() {
@@ -457,7 +474,7 @@ public class Score implements ScoreObject {
 			systems.add(previous);
 			
 		}
-		java.lang.System.out.format("block height is %d, not %d\n", previous.getBottom()-first.getTop(),current_height);
+		//java.lang.System.out.format("block height is %d, not %d\n", previous.getBottom()-first.getTop(),current_height);
 		return new Block(systems);
 
 	}
@@ -527,8 +544,7 @@ public class Score implements ScoreObject {
 		if (index == size-1 && !outOfBlock(block, next.getStart())) {
 			return null;
 		}
-		return next;
-		
+		return next;		
 	}
 	
 	public List<Block> createBlockList(List<PlaybackEvent> events, int block_height) {
@@ -559,28 +575,36 @@ public class Score implements ScoreObject {
 		return blocks;
 	}
 
-	public void magnify() {
-//		if (_displayIndex == _displayHeights.size() - 1) {
-//			return;
-//		}
-		
-		updateCurrentHeight((int)(_currentHeight * 1.2));
-		for (Page page : _pages) {
-			Image image = page.getImage();
-			image.resize(_currentHeight, 1);
+	public boolean magnify() {
+		if (_displayIndex == _displayHeights.size() - 1) {
+			return false;
 		}
+		
+		_displayIndex += 1;
+		
+		updateCurrentHeight(_displayHeights.get(_displayIndex));
+//		for (Page page : _pages) {
+//			Image image = page.getImage();
+//			image.resize(_currentHeight, 1);
+//		}
+		return true;
 	}
 	
-	public void reduce() {
-//		if (_displayIndex == 0) {
-//			return;
-//		}
-		
-		updateCurrentHeight((int)(_currentHeight / 1.2));
-		for (Page page : _pages) {
-			Image image = page.getImage();
-			image.resize(_currentHeight, 1);
+	public boolean reduce() {
+		if (_displayIndex == 0) {
+			return false;
 		}
+		_displayIndex -= 1;
+		updateCurrentHeight(_displayHeights.get(_displayIndex));
+//		for (Page page : _pages) {
+//			Image image = page.getImage();
+//			image.resize(_currentHeight, 1);
+//		}
+		return true;
+	}
+	
+	public void updateCurrentHeight() {
+		updateCurrentHeight(_displayHeights.get(_displayIndex));
 	}
 	
 	public void updateCurrentHeight(int height) {

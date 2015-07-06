@@ -128,7 +128,7 @@ public class Model implements DisplayMenuListener {
 	
 
 	public int getUsableHeight() {
-		System.out.format("(%d)\n", _usableHeight);
+		
 		return _usableHeight;
 	}
 	
