@@ -21,6 +21,7 @@ public class Page implements ScoreObject {
 	public Page(Score parent, Image image, List<System> systems) {
 		_parent = parent;
 		_image = image;
+		//java.lang.System.out.format("_image height %d", _image.getImage().getHeight());
 		_systems = systems;
 	}
 

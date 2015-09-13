@@ -1,5 +1,6 @@
 package edu.cmu.mat.scores;
 
+import java.awt.Dimension;
 import java.awt.Point;
 import java.io.File;
 import java.io.FileWriter;
@@ -43,9 +44,10 @@ public class Score implements ScoreObject {
 	private int _originalHeight;
 	private int _currentHeight;
 	//@Expose
-	private List<Integer> _displayHeights;
+	private List<Dimension> _displayHeights;
 	//@Expose
 	private int _displayIndex;
+	private double _w2hRatio;
 	@Expose
 	private Arrangement _arrangement = new Arrangement(this);
 
@@ -64,9 +66,10 @@ public class Score implements ScoreObject {
 		this(name);
 		//XXX assumes same height for all images of the score
 		_originalHeight = images.get(0).getImage().getHeight();
+		_w2hRatio = ((double) images.get(0).getImage().getWidth()) / _originalHeight;
 		_currentHeight = currentH;
-		_displayHeights = new ArrayList<Integer>();
-		_displayHeights.add(currentH);
+		_displayHeights = new ArrayList<Dimension>();
+		_displayHeights.add(new Dimension((int) (currentH*_w2hRatio), currentH));
 		_displayIndex = 0;
 		for (Image image : images) {
 			addPage(new Page(this, image));
@@ -77,18 +80,11 @@ public class Score implements ScoreObject {
 	public Score(Score other, List<Image> images, int currentH) {
 		this(other.getName());
 		_originalHeight = other.getOriginalHeight();
-		//_currentHeight = currentH;
-		//_displayHeights = other.getDisplayHeights();
-		//if (_displayHeights == null) {
-		_displayHeights = new ArrayList<Integer>();
-		_displayHeights.add(currentH);
+		_w2hRatio = ((double) images.get(0).getImage().getWidth()) / _originalHeight;
+		_currentHeight = currentH;
+		_displayHeights = new ArrayList<Dimension>();
+		_displayHeights.add(new Dimension((int) (currentH*_w2hRatio), currentH));
 		_displayIndex = 0;
-		//}
-//		else {
-//			//_displayIndex = other.getDisplayIndex();
-//			_displayIndex = 0; // for demo
-//		}
-		_currentHeight = _displayHeights.get(_displayIndex);
 		
 		for (int i = 0; i < other.getNumberPages(); i++) {
 			addPage(new Page(this, other.getPage(i), images.get(i)));
@@ -116,11 +112,11 @@ public class Score implements ScoreObject {
 					maxH = system.getInnerHeight();
 			}
 		}
-		int currH = _displayHeights.get(0);
+		int currH = _displayHeights.get(_displayHeights.size()-1).height;
 		while (maxH * 1.2 < blockHeight) {
 			maxH = (int) (maxH * 1.2);
 			currH = (int) (currH * 1.2);
-			_displayHeights.add(currH);
+			_displayHeights.add(new Dimension((int)(currH*_w2hRatio), currH));
 		}
 	}
 
@@ -144,9 +140,13 @@ public class Score implements ScoreObject {
 		return _currentHeight;
 	}
 	
-	public List<Integer> getDisplayHeights(){
-		return _displayHeights;
+	public int getCurrentWidth() {
+		return (int) (_currentHeight * _w2hRatio);
 	}
+	
+//	public List<Integer> getDisplayHeights(){
+//		return _displayHeights;
+//	}
 	
 	public int getDisplayIndex() {
 		return _displayIndex;
@@ -582,7 +582,7 @@ public class Score implements ScoreObject {
 		
 		_displayIndex += 1;
 		
-		updateCurrentHeight(_displayHeights.get(_displayIndex));
+		updateCurrentHeight(_displayHeights.get(_displayIndex).height);
 //		for (Page page : _pages) {
 //			Image image = page.getImage();
 //			image.resize(_currentHeight, 1);
@@ -595,7 +595,7 @@ public class Score implements ScoreObject {
 			return false;
 		}
 		_displayIndex -= 1;
-		updateCurrentHeight(_displayHeights.get(_displayIndex));
+		updateCurrentHeight(_displayHeights.get(_displayIndex).height);
 //		for (Page page : _pages) {
 //			Image image = page.getImage();
 //			image.resize(_currentHeight, 1);
@@ -604,7 +604,7 @@ public class Score implements ScoreObject {
 	}
 	
 	public void updateCurrentHeight() {
-		updateCurrentHeight(_displayHeights.get(_displayIndex));
+		updateCurrentHeight(_displayHeights.get(_displayIndex).height);
 	}
 	
 	public void updateCurrentHeight(int height) {

@@ -11,15 +11,12 @@ public class Block {
 	
 	private List<Barline> _jumps = new ArrayList<Barline>();
 	private int _jump_index = 0;
-	//private int _start_event_i;
-	//private int _end_event_i;
-	
-	//private int _duration;
+
 	
 	private boolean _is_flipped = false;
 	
 	
-	private java.awt.Image _image;
+	//private java.awt.Image _image;
 	
 	public Block(List<System> systems) {
 		_systems = systems;
@@ -87,7 +84,7 @@ public class Block {
 		
 		return offset;
 	}
-	
+	/*
 	public void makeImage(int currentHeight) {
 		Page start_page = _start_system.getParent();
 		Page end_page = _end_system.getParent();
@@ -123,7 +120,7 @@ public class Block {
 	public int getHeight() {
 		return _image.getHeight(null);
 	}
-	
+	*/
 	public System getStartSystem() {
 		return _start_system;
 	}

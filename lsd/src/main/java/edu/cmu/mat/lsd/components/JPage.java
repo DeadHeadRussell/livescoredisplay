@@ -98,7 +98,6 @@ public class JPage extends JPanel {
 	@Override
 	public void paint(Graphics graphics) {
 		super.paint(graphics);
-
 		if (FONT_METRICS == null) {
 			FONT_METRICS = graphics.getFontMetrics();
 		}

@@ -1,6 +1,8 @@
 package edu.cmu.mat.scores;
 
 import java.awt.Color;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,14 +21,25 @@ public class Image {
 
 		int width = image.getWidth();
 		int height = image.getHeight();
-		BufferedImage coloured = new BufferedImage(width, height,
-				BufferedImage.TYPE_INT_ARGB);
-		coloured.getGraphics().setColor(Color.WHITE);
-		coloured.getGraphics().fillRect(0, 0, width, height);
-		coloured.getGraphics().drawImage(image, 0, 0, width, height, 0, 0,
+		//BufferedImage coloured = new BufferedImage(width, height,
+		//		BufferedImage.TYPE_INT_ARGB);
+		//Get current GraphicsConfiguration
+        GraphicsConfiguration graphicsConfiguration 
+                = GraphicsEnvironment
+                .getLocalGraphicsEnvironment()
+                .getDefaultScreenDevice()
+                .getDefaultConfiguration();
+         
+        //Create a Compatible BufferedImage
+        BufferedImage bufferedImage 
+                = graphicsConfiguration.createCompatibleImage(width, height);
+        
+		bufferedImage.getGraphics().setColor(Color.WHITE);
+		bufferedImage.getGraphics().fillRect(0, 0, width, height);
+		bufferedImage.getGraphics().drawImage(image, 0, 0, width, height, 0, 0,
 				width, height, null);
 
-		_resizedImage = coloured;
+		_resizedImage = bufferedImage;
 	}
 
 	public void resize(int size, int dimension) {
@@ -67,6 +80,10 @@ public class Image {
 
 	public BufferedImage getImage() {
 		return _resizedImage;
+	}
+	
+	public BufferedImage getOriginalImage() {
+		return _originalImage;
 	}
 	
 	public void setResizedImage(BufferedImage resizedImage) {

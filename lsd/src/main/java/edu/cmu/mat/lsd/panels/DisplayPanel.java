@@ -202,7 +202,8 @@ public class DisplayPanel implements Panel, HcmpListener {
 			_panel.remove(_lower_block);
 		}
 		
-		int width = _blocks.get(_current_block_index).getWidth();
+		int width = _score.getCurrentWidth();//_blocks.get(_current_block_index).getWidth();
+		
 		int height = _layers.getHeight();
 		
 		_layers.setPreferredSize(new Dimension(width, height));
@@ -274,7 +275,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 
 		initializeBlocks(0);
 		
-		int width = _blocks.get(0).getWidth();
+		int width = _score.getCurrentWidth();//_blocks.get(0).getWidth();
 		int height = _upper_block.getHeight() + _lower_block.getHeight() + 10;
 		
 		
@@ -303,15 +304,18 @@ public class DisplayPanel implements Panel, HcmpListener {
 	}
 	
 	private void initializeBlocks(int index) {
+		_upper_block.setWidth(_score.getCurrentWidth());
+		_lower_block.setWidth(_score.getCurrentWidth());
+		
 		Block curr = _blocks.get(index);
-		curr.makeImage(_score.getCurrentHeight());
+		//curr.makeImage(_score.getCurrentHeight());
 		
 		if (index % 2 == 0) _upper_block.setBlock(curr);
 		else _lower_block.setBlock(curr);
 			
 		if (_blocks.size() > index + 1) {
 			Block next = _blocks.get(index + 1);
-			next.makeImage(_score.getCurrentHeight());
+			//next.makeImage(_score.getCurrentHeight());
 			if (index % 2 == 0) _lower_block.setBlock(next);
 			else _upper_block.setBlock(next);
 		}
@@ -392,7 +396,7 @@ public class DisplayPanel implements Panel, HcmpListener {
 		if (!current_block.isBlockFlipped()) {
 			if (_current_block_index < _blocks.size() - 1) {
 				Block next_block = _blocks.get(_current_block_index + 1);
-				next_block.makeImage(_score.getCurrentHeight());
+				//next_block.makeImage(_score.getCurrentHeight());
 				if (_current_block_index % 2 == 0) _lower_block.setBlock(next_block);
 				else _upper_block.setBlock(next_block);
 				
