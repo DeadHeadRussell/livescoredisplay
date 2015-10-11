@@ -15,7 +15,7 @@ public class Image {
 	public static int DIMENSION_HEIGHT = 1;
 
 	public Image(BufferedImage image) {
-		_originalImage = image;
+		//_originalImage = image;
 		// _resizedImage = image.getScaledInstance(image.getWidth(),
 		// image.getHeight(), BufferedImage.SCALE_SMOOTH);
 
@@ -38,7 +38,7 @@ public class Image {
 		bufferedImage.getGraphics().fillRect(0, 0, width, height);
 		bufferedImage.getGraphics().drawImage(image, 0, 0, width, height, 0, 0,
 				width, height, null);
-
+		_originalImage = bufferedImage;
 		_resizedImage = bufferedImage;
 	}
 

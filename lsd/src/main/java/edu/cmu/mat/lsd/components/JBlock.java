@@ -84,13 +84,14 @@ public class JBlock extends JPanel implements ImageObserver{
 		//java.lang.System.out.format("startI: %d, endI: %d\n", startIndex, endIndex);
 		//List<Page> sectionPages = pages.subList(startIndex, endIndex + 1);
 
-		int top = startSystem.getTop();
-		int bottom = endSystem.getBottom();
+		int top = (int) startSystem.getAbsoluteTop();
+		int bottom = (int) endSystem.getAbsoluteBottom();
 		int height = 0;
 		for (int i = startIndex; i < endIndex+1; i++) {
 			Page page = pages.get(i);
 			List<System> systems = page.getSystems();
-			BufferedImage image = page.getImage().getImage();
+			/*
+			BufferedImage image = page.getImage().getOriginalImage();
 			//Get current GraphicsConfiguration
             GraphicsConfiguration graphicsConfiguration 
                     = GraphicsEnvironment
@@ -104,29 +105,33 @@ public class JBlock extends JPanel implements ImageObserver{
                     image.getWidth(), 
                     image.getHeight());
             bufferedImage.getGraphics().setColor(Color.WHITE);
-            bufferedImage.getGraphics().drawImage(image, 0, 0, null);
-            
+            bufferedImage.getGraphics().drawImage(image, 0, 0,  null);
+            */
+			BufferedImage image = page.getImage().getOriginalImage();
             
 			int pageTop = top;
 			if (i > 0) {
-				pageTop = systems.get(0).getTop();
+				pageTop = (int) systems.get(0).getAbsoluteTop();
 			}
 
 			int pageBottom = bottom;
 			if (i < endIndex - startIndex) {
-				pageBottom = systems.get(systems.size() - 1).getBottom();
+				pageBottom = (int) systems.get(systems.size() - 1).getAbsoluteBottom();
 			}
 			java.lang.System.out.println("Image height is" + image.getHeight());
+			java.lang.System.out.println("Image width is" + image.getWidth());
 			int sx1 = 0;
 			int sy1 = pageTop;
-			int sx2 = image.getWidth(this);
+			int sx2 = image.getWidth();
 			int sy2 = pageBottom;
+			java.lang.System.out.println("source: " + sx1 + " " + sy1 + " " + sx2 + " "+ sy2);
 			int dx1 = 0;
 			int dy1 = height;
 			int dx2 = _width;
 			int dy2 = height + (int) ((pageBottom - pageTop) * 1.0 * dx2 / sx2); // dx2 / sx2 is factor ratio
 			//long start = java.lang.System.currentTimeMillis();
-			graphics.drawImage(bufferedImage, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, Color.WHITE, null);
+			java.lang.System.out.println("dest: " + dx1 + " " + dy1 + " " + dx2 + " "+ dy2);
+			graphics.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, Color.WHITE, null);
 			//long end = java.lang.System.currentTimeMillis();
 			//long diff = end - start;
 			//java.lang.System.out.println("Difference is " + diff);
