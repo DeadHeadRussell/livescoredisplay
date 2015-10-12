@@ -3,9 +3,11 @@ package edu.cmu.mat.lsd.components;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.util.List;
@@ -66,10 +68,11 @@ public class JBlock extends JPanel implements ImageObserver{
 	@Override
 	public void paint(Graphics graphics) {
 		super.paint(graphics);
-
-		//graphics.drawImage(_image, 0, 0, this);
-		//graphics.drawImage(_image, 0, 0, 50, 50, Color.WHITE, this);
-		//graphics.drawImage(_image, 100, 100, 200, 200, 0, 50,  50, 100, Color.WHITE, this);
+		Graphics2D g2d = (Graphics2D) graphics;
+		//g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		//g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+		
+		
 		
 		System startSystem = _block.getStartSystem();
 		System endSystem = _block.getEndSystem();
@@ -131,7 +134,9 @@ public class JBlock extends JPanel implements ImageObserver{
 			int dy2 = height + (int) ((pageBottom - pageTop) * 1.0 * dx2 / sx2); // dx2 / sx2 is factor ratio
 			//long start = java.lang.System.currentTimeMillis();
 			java.lang.System.out.println("dest: " + dx1 + " " + dy1 + " " + dx2 + " "+ dy2);
-			graphics.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, Color.WHITE, null);
+			
+			
+			g2d.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, Color.WHITE, null);
 			//long end = java.lang.System.currentTimeMillis();
 			//long diff = end - start;
 			//java.lang.System.out.println("Difference is " + diff);
